@@ -37,25 +37,27 @@ nav:
     weight: 100
     showWhen: authenticated
     children:
-      - id: projects-all
+      - id: projects-dashboard
         label: Projects
         path: /projects
         icon: FolderKanban
         weight: 100
         showWhen: authenticated
-      - id: projects-create
-        label: Create
-        path: /projects/new
-        icon: Plus
-        weight: 110
-        showWhen: authenticated
-      - id: projects-setup-statuses
-        label: Setup (Statuses)
-        path: /projects/setup/statuses
+      - id: projects-setup
+        label: Setup
+        path: ""
         icon: Settings
-        weight: 120
+        weight: 900
         showWhen: authenticated
         roles: [admin]
+        children:
+          - id: projects-setup-statuses
+            label: Statuses
+            path: /projects/setup/statuses
+            icon: Tag
+            weight: 100
+            showWhen: authenticated
+            roles: [admin]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SCHEMA - Drizzle ORM table definitions
