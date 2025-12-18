@@ -2,7 +2,6 @@
 # Domain-agnostic Projects feature pack - execution containers with teams, milestones, links, and activity log
 
 name: projects
-version: 1.0.0
 description: Projects feature pack - execution containers with teams, milestones, links, and activity log
 
 # ─────────────────────────────────────────────────────────────────────────────
