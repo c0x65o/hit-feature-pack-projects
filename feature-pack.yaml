@@ -1,0 +1,49 @@
+# Feature Pack: projects
+# A HIT feature pack
+
+name: projects
+version: 1.0.0
+description: A HIT feature pack
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ROUTES - Frontend page routes
+# ─────────────────────────────────────────────────────────────────────────────
+routes:
+  - path: /projects
+    page: Dashboard
+    roles: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NAVIGATION - Sidebar/topbar items
+# ─────────────────────────────────────────────────────────────────────────────
+nav:
+  - id: projects
+    label: projects
+    path: /projects
+    icon: Package
+    group: main
+    weight: 100
+    showWhen: authenticated
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SCHEMA - Drizzle ORM table definitions
+# ─────────────────────────────────────────────────────────────────────────────
+schema:
+  source: src/schema/projects.ts
+  exports: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API ROUTES - Backend endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+api:
+  routes: []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEPENDENCIES
+# ─────────────────────────────────────────────────────────────────────────────
+requires:
+  modules: []
+
+dependencies:
+  feature_packs:
+    - name: dashboard-shell

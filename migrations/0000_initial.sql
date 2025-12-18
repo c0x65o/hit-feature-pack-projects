@@ -1,0 +1,2 @@
+-- Initial schema for projects feature pack
+-- Add your CREATE TABLE statements here
