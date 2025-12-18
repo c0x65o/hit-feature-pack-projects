@@ -11,7 +11,6 @@ import {
 } from '@/lib/feature-pack-schemas';
 import { eq, desc, asc, like, sql, and, or, inArray, type AnyColumn } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
-import { isProjectsGroupsOnlyRead } from '../lib/policy';
 import { getUserGroupIds, isAdmin } from '../lib/access';
 
 // Required for Next.js App Router
@@ -81,7 +80,6 @@ export async function GET(request: NextRequest) {
 
     const db = getDb();
     const { searchParams } = new URL(request.url);
-    const groupsOnlyRead = isProjectsGroupsOnlyRead();
     const admin = isAdmin(user);
 
     // Pagination
@@ -126,51 +124,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // If groups-only read is enabled, non-admins only see projects where one of their groups has access.
-    // Admins should always be able to see everything.
-    if (groupsOnlyRead && !admin) {
-      const groupIds = await getUserGroupIds(db, user);
-      if (groupIds.length === 0) {
-        return NextResponse.json({
-          items: [],
-          pagination: { page, pageSize, total: 0, totalPages: 0 },
-        });
-      }
-
-      const countConditions = [inArray(projectGroupRoles.groupId, groupIds)];
-      if (whereClause) countConditions.push(whereClause);
-      const groupsOnlyWhere = and(...countConditions);
-
-      const countResult = await db
-        .select({ count: sql<number>`count(distinct ${projects.id})` })
-        .from(projects)
-        .innerJoin(projectGroupRoles, eq(projectGroupRoles.projectId, projects.id))
-        .where(groupsOnlyWhere);
-      const total = Number(countResult[0]?.count || 0);
-
-      const results = await db
-        .selectDistinct({ project: projects })
-        .from(projects)
-        .innerJoin(projectGroupRoles, eq(projectGroupRoles.projectId, projects.id))
-        .where(groupsOnlyWhere)
-        .orderBy(orderDirection)
-        .limit(pageSize)
-        .offset(offset);
-
-      const items = results.map((r: { project: Project }) => r.project);
-
-      return NextResponse.json({
-        items,
-        pagination: {
-          page,
-          pageSize,
-          total,
-          totalPages: Math.ceil(total / pageSize),
-        },
-      });
-    }
-
-    // All-authenticated read (default)
+    // All-authenticated read: project visibility is not restricted by group membership.
     const countQuery = db.select({ count: sql<number>`count(*)` }).from(projects);
     const countResult = whereClause ? await countQuery.where(whereClause) : await countQuery;
     const total = Number(countResult[0]?.count || 0);
@@ -181,7 +135,7 @@ export async function GET(request: NextRequest) {
       : await baseQuery.orderBy(orderDirection).limit(pageSize).offset(offset);
 
     return NextResponse.json({
-      items,
+      data: items,
       pagination: {
         page,
         pageSize,

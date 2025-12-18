@@ -3,7 +3,6 @@ import { projectGroupRoles } from '@/lib/feature-pack-schemas';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { User } from '../auth';
 import type { ProjectRole } from '../../schema/projects';
-import { getProjectsPolicy } from './policy';
 
 export type ProjectPermission =
   | 'project.read'
@@ -125,18 +124,11 @@ export async function requireProjectPermission(
     return { ok: true, role: 'owner', isAdmin: true };
   }
 
-  const policy = getProjectsPolicy();
   const groupIds = await getUserGroupIds(db, user);
 
-  // Reads are open to all authenticated users by default policy.
+  // Reads are open to all authenticated users.
   if (permission === 'project.read') {
-    if (policy.readPolicy === 'all_authenticated') {
-      return { ok: true, role: null, isAdmin: false };
-    }
-    const role = await getUserProjectRole(db, projectId, groupIds);
-    return role
-      ? { ok: true, role, isAdmin: false }
-      : { ok: false, status: 403, error: 'Forbidden' };
+    return { ok: true, role: null, isAdmin: false };
   }
 
   const role = await getUserProjectRole(db, projectId, groupIds);

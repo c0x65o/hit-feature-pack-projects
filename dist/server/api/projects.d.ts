@@ -8,7 +8,7 @@ export declare const runtime = "nodejs";
 export declare function GET(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
-    items: any;
+    data: any;
     pagination: {
         page: number;
         pageSize: number;

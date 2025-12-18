@@ -1,4 +1,4 @@
-export type ProjectsReadPolicy = 'all_authenticated' | 'groups_only';
+export type ProjectsReadPolicy = 'all_authenticated';
 export interface ProjectsPolicy {
     readPolicy: ProjectsReadPolicy;
 }
@@ -6,9 +6,6 @@ export interface ProjectsPolicy {
  * Feature-flag-style policy shim for customer-specific behavior.
  *
  * Default is intentionally permissive: **all authenticated users can read**.
- *
- * Controls:
- * - HIT_PROJECTS_READ_POLICY=all_authenticated|groups_only
  */
 export declare function getProjectsPolicy(): ProjectsPolicy;
 export declare function isProjectsGroupsOnlyRead(): boolean;
