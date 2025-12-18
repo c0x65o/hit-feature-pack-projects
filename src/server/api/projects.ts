@@ -82,6 +82,7 @@ export async function GET(request: NextRequest) {
     const db = getDb();
     const { searchParams } = new URL(request.url);
     const groupsOnlyRead = isProjectsGroupsOnlyRead();
+    const admin = isAdmin(user);
 
     // Pagination
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -125,7 +126,9 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    if (groupsOnlyRead) {
+    // If groups-only read is enabled, non-admins only see projects where one of their groups has access.
+    // Admins should always be able to see everything.
+    if (groupsOnlyRead && !admin) {
       const groupIds = await getUserGroupIds(db, user);
       if (groupIds.length === 0) {
         return NextResponse.json({
