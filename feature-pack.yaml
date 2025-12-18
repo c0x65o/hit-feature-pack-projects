@@ -1,9 +1,9 @@
 # Feature Pack: projects
-# A HIT feature pack
+# Domain-agnostic Projects feature pack - execution containers with teams, milestones, links, and activity log
 
 name: projects
 version: 1.0.0
-description: A HIT feature pack
+description: Projects feature pack - execution containers with teams, milestones, links, and activity log
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ROUTES - Frontend page routes
@@ -12,15 +12,27 @@ routes:
   - path: /projects
     page: Dashboard
     roles: []
+  - path: /projects/new
+    page: CreateProject
+    roles: []
+  - path: /projects/[id]
+    page: ProjectDetail
+    roles: []
+  - path: /projects/[id]/edit
+    page: EditProject
+    roles: []
+  - path: /projects/setup/statuses
+    page: ProjectStatusesSetup
+    roles: [admin]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # NAVIGATION - Sidebar/topbar items
 # ─────────────────────────────────────────────────────────────────────────────
 nav:
   - id: projects
-    label: projects
+    label: Projects
     path: /projects
-    icon: Package
+    icon: FolderKanban
     group: main
     weight: 100
     showWhen: authenticated
@@ -30,19 +42,99 @@ nav:
 # ─────────────────────────────────────────────────────────────────────────────
 schema:
   source: src/schema/projects.ts
-  exports: []
+  exports:
+    - projects
+    - projectStatuses
+    - projectGroupRoles
+    - projectMilestones
+    - projectLinks
+    - projectActivity
+    - projectNotes
+    - Project
+    - ProjectStatusRecord
+    - ProjectGroupRole
+    - ProjectMilestone
+    - ProjectLink
+    - ProjectActivity
+    - ProjectNote
+    - InsertProject
+    - InsertProjectStatus
+    - InsertProjectGroupRole
+    - InsertProjectMilestone
+    - InsertProjectLink
+    - InsertProjectActivity
+    - InsertProjectNote
+    - PROJECT_ROLES
+    - DEFAULT_PROJECT_STATUS_KEYS
+    - MILESTONE_STATUSES
+    - ACTIVITY_TYPES
+    - ProjectRole
+    - ProjectStatus
+    - DefaultProjectStatusKey
+    - MilestoneStatus
+    - ActivityType
 
 # ─────────────────────────────────────────────────────────────────────────────
 # API ROUTES - Backend endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 api:
-  routes: []
+  routes:
+    # Projects
+    - path: /api/projects
+      methods: [GET, POST]
+      handler: "@hit/feature-pack-projects/server/api/projects"
+      description: "List projects (GET) or create project (POST)"
+    - path: /api/projects/[projectId]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-id"
+      description: "Get, update, or delete a specific project"
+    # Project Groups (Auth groups granted project roles)
+    - path: /api/projects/[projectId]/groups
+      methods: [GET, POST]
+      handler: "@hit/feature-pack-projects/server/api/projects-groups"
+      description: "List project groups (GET) or grant a group role (POST)"
+    - path: /api/projects/[projectId]/groups/[groupId]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-groups-id"
+      description: "Get, update, or remove a project group role"
+    # Project Milestones
+    - path: /api/projects/[projectId]/milestones
+      methods: [GET, POST]
+      handler: "@hit/feature-pack-projects/server/api/projects-milestones"
+      description: "List project milestones (GET) or create milestone (POST)"
+    - path: /api/projects/[projectId]/milestones/[milestoneId]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-milestones-id"
+      description: "Get, update, or delete a project milestone"
+    # Project Links
+    - path: /api/projects/[projectId]/links
+      methods: [GET, POST]
+      handler: "@hit/feature-pack-projects/server/api/projects-links"
+      description: "List project links (GET) or create link (POST)"
+    - path: /api/projects/[projectId]/links/[linkId]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-links-id"
+      description: "Get, update, or remove a project link"
+    # Project Activity (read-only)
+    - path: /api/projects/[projectId]/activity
+      methods: [GET]
+      handler: "@hit/feature-pack-projects/server/api/projects-activity"
+      description: "List project activity log (read-only)"
+    # Project Statuses (setup-controlled)
+    - path: /api/projects/statuses
+      methods: [GET, POST]
+      handler: "@hit/feature-pack-projects/server/api/projects-statuses"
+      description: "List project statuses (GET) or create status (POST) [admin]"
+    - path: /api/projects/statuses/[statusKey]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-statuses-key"
+      description: "Get, update, or delete a project status [admin]"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DEPENDENCIES
 # ─────────────────────────────────────────────────────────────────────────────
 requires:
-  modules: []
+  modules: [auth]
 
 dependencies:
   feature_packs:

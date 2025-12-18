@@ -1,0 +1,1 @@
+{"version":3,"file":"projects-groups.d.ts","sourceRoot":"","sources":["../../../src/server/api/projects-groups.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAaxD,eAAO,MAAM,OAAO,kBAAkB,CAAC;AACvC,eAAO,MAAM,OAAO,WAAW,CAAC;AAiChC;;;GAGG;AACH,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW;;;;IAoC7C;AAED;;;GAGG;AACH,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;IA6E9C"}

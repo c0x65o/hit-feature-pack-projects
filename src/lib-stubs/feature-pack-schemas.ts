@@ -7,5 +7,35 @@
  */
 
 // Re-export schema tables from this feature pack
-// Update this when you add tables to src/schema/projects.ts
-// export { myTable } from '../schema/projects';
+export {
+  projects,
+  projectStatuses,
+  projectGroupRoles,
+  projectMilestones,
+  projectLinks,
+  projectActivity,
+  projectNotes,
+  Project,
+  ProjectStatusRecord,
+  ProjectGroupRole,
+  ProjectMilestone,
+  ProjectLink,
+  ProjectActivity,
+  ProjectNote,
+  InsertProject,
+  InsertProjectStatus,
+  InsertProjectGroupRole,
+  InsertProjectMilestone,
+  InsertProjectLink,
+  InsertProjectActivity,
+  InsertProjectNote,
+  PROJECT_ROLES,
+  DEFAULT_PROJECT_STATUS_KEYS,
+  MILESTONE_STATUSES,
+  ACTIVITY_TYPES,
+  type ProjectRole,
+  type ProjectStatus,
+  type DefaultProjectStatusKey,
+  type MilestoneStatus,
+  type ActivityType,
+} from '../schema/projects';
