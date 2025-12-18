@@ -6,7 +6,6 @@
  *
  * Core entities:
  * - projects: Main project records
- * - project_group_roles: Auth groups granted project-scoped roles
  * - project_milestones: Project milestones/goals
  * - project_links: Generic links to other entities (no cross-pack FKs)
  * - project_activity: Audit trail for project changes
@@ -83,34 +82,6 @@ export const projectStatuses = pgTable(
 );
 
 /**
- * Project Group Roles Table
- * Stores auth groups with project-level roles
- * Roles: owner, manager, contributor, viewer
- */
-export const projectGroupRoles = pgTable(
-  'project_group_roles',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    projectId: uuid('project_id')
-      .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    groupId: varchar('group_id', { length: 255 }).notNull(), // References auth group (opaque ID, no FK)
-    role: varchar('role', { length: 50 }).notNull().default('contributor'), // owner, manager, contributor, viewer
-    // Audit fields
-    createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
-    createdOnTimestamp: timestamp('created_on_timestamp').defaultNow().notNull(),
-    lastUpdatedByUserId: varchar('last_updated_by_user_id', { length: 255 }),
-    lastUpdatedOnTimestamp: timestamp('last_updated_on_timestamp').defaultNow().notNull(),
-  },
-  (table) => ({
-    projectGroupIdx: unique('project_group_roles_project_group_unique').on(table.projectId, table.groupId),
-    projectIdx: index('project_group_roles_project_idx').on(table.projectId),
-    groupIdx: index('project_group_roles_group_idx').on(table.groupId),
-    roleIdx: index('project_group_roles_role_idx').on(table.role),
-  })
-);
-
-/**
  * Project Milestones Table
  * Stores project milestones/goals with target dates
  */
@@ -177,7 +148,6 @@ export const projectLinks = pgTable(
  * Project Activity Table
  * Audit trail for project changes and events
  * Records: project.created, project.updated, project.status_changed,
- *          project.group_added, project.group_removed, project.group_role_changed,
  *          project.link_added, project.link_removed,
  *          project.milestone_created, project.milestone_updated
  */
@@ -231,18 +201,10 @@ export const projectNotes = pgTable(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const projectsRelations = relations(projects, ({ many }) => ({
-  groups: many(projectGroupRoles),
   milestones: many(projectMilestones),
   links: many(projectLinks),
   activity: many(projectActivity),
   notes: many(projectNotes),
-}));
-
-export const projectGroupRolesRelations = relations(projectGroupRoles, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectGroupRoles.projectId],
-    references: [projects.id],
-  }),
 }));
 
 export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
@@ -279,7 +241,6 @@ export const projectNotesRelations = relations(projectNotes, ({ one }) => ({
 
 export type Project = InferSelectModel<typeof projects>;
 export type ProjectStatusRecord = InferSelectModel<typeof projectStatuses>;
-export type ProjectGroupRole = InferSelectModel<typeof projectGroupRoles>;
 export type ProjectMilestone = InferSelectModel<typeof projectMilestones>;
 export type ProjectLink = InferSelectModel<typeof projectLinks>;
 export type ProjectActivity = InferSelectModel<typeof projectActivity>;
@@ -287,7 +248,6 @@ export type ProjectNote = InferSelectModel<typeof projectNotes>;
 
 export type InsertProject = InferInsertModel<typeof projects>;
 export type InsertProjectStatus = InferInsertModel<typeof projectStatuses>;
-export type InsertProjectGroupRole = InferInsertModel<typeof projectGroupRoles>;
 export type InsertProjectMilestone = InferInsertModel<typeof projectMilestones>;
 export type InsertProjectLink = InferInsertModel<typeof projectLinks>;
 export type InsertProjectActivity = InferInsertModel<typeof projectActivity>;
@@ -297,8 +257,6 @@ export type InsertProjectNote = InferInsertModel<typeof projectNotes>;
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const PROJECT_ROLES = ['owner', 'manager', 'contributor', 'viewer'] as const;
-export type ProjectRole = (typeof PROJECT_ROLES)[number];
 
 /**
  * ProjectStatus is setup-controlled and therefore not a fixed union.
@@ -319,9 +277,6 @@ export const ACTIVITY_TYPES = [
   'project.created',
   'project.updated',
   'project.status_changed',
-  'project.group_added',
-  'project.group_removed',
-  'project.group_role_changed',
   'project.link_added',
   'project.link_removed',
   'project.link_updated',

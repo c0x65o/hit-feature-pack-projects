@@ -6,7 +6,6 @@
  *
  * Core entities:
  * - projects: Main project records
- * - project_group_roles: Auth groups granted project-scoped roles
  * - project_milestones: Project milestones/goals
  * - project_links: Generic links to other entities (no cross-pack FKs)
  * - project_activity: Audit trail for project changes
@@ -234,114 +233,6 @@ export declare const projectStatuses: import("drizzle-orm/pg-core").PgTableWithC
         updatedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "updated_at";
             tableName: "project_statuses";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-/**
- * Project Group Roles Table
- * Stores auth groups with project-level roles
- * Roles: owner, manager, contributor, viewer
- */
-export declare const projectGroupRoles: import("drizzle-orm/pg-core").PgTableWithColumns<{
-    name: "project_group_roles";
-    schema: undefined;
-    columns: {
-        id: import("drizzle-orm/pg-core").PgColumn<{
-            name: "id";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        projectId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "project_id";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        groupId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "group_id";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        role: import("drizzle-orm/pg-core").PgColumn<{
-            name: "role";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        createdByUserId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "created_by_user_id";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        createdOnTimestamp: import("drizzle-orm/pg-core").PgColumn<{
-            name: "created_on_timestamp";
-            tableName: "project_group_roles";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        lastUpdatedByUserId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "last_updated_by_user_id";
-            tableName: "project_group_roles";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        lastUpdatedOnTimestamp: import("drizzle-orm/pg-core").PgColumn<{
-            name: "last_updated_on_timestamp";
-            tableName: "project_group_roles";
             dataType: "date";
             columnType: "PgTimestamp";
             data: Date;
@@ -622,7 +513,6 @@ export declare const projectLinks: import("drizzle-orm/pg-core").PgTableWithColu
  * Project Activity Table
  * Audit trail for project changes and events
  * Records: project.created, project.updated, project.status_changed,
- *          project.group_added, project.group_removed, project.group_role_changed,
  *          project.link_added, project.link_removed,
  *          project.milestone_created, project.milestone_updated
  */
@@ -813,14 +703,10 @@ export declare const projectNotes: import("drizzle-orm/pg-core").PgTableWithColu
     dialect: "pg";
 }>;
 export declare const projectsRelations: import("drizzle-orm").Relations<"projects", {
-    groups: import("drizzle-orm").Many<"project_group_roles">;
     milestones: import("drizzle-orm").Many<"project_milestones">;
     links: import("drizzle-orm").Many<"project_links">;
     activity: import("drizzle-orm").Many<"project_activity">;
     notes: import("drizzle-orm").Many<"project_notes">;
-}>;
-export declare const projectGroupRolesRelations: import("drizzle-orm").Relations<"project_group_roles", {
-    project: import("drizzle-orm").One<"projects", true>;
 }>;
 export declare const projectMilestonesRelations: import("drizzle-orm").Relations<"project_milestones", {
     project: import("drizzle-orm").One<"projects", true>;
@@ -836,20 +722,16 @@ export declare const projectNotesRelations: import("drizzle-orm").Relations<"pro
 }>;
 export type Project = InferSelectModel<typeof projects>;
 export type ProjectStatusRecord = InferSelectModel<typeof projectStatuses>;
-export type ProjectGroupRole = InferSelectModel<typeof projectGroupRoles>;
 export type ProjectMilestone = InferSelectModel<typeof projectMilestones>;
 export type ProjectLink = InferSelectModel<typeof projectLinks>;
 export type ProjectActivity = InferSelectModel<typeof projectActivity>;
 export type ProjectNote = InferSelectModel<typeof projectNotes>;
 export type InsertProject = InferInsertModel<typeof projects>;
 export type InsertProjectStatus = InferInsertModel<typeof projectStatuses>;
-export type InsertProjectGroupRole = InferInsertModel<typeof projectGroupRoles>;
 export type InsertProjectMilestone = InferInsertModel<typeof projectMilestones>;
 export type InsertProjectLink = InferInsertModel<typeof projectLinks>;
 export type InsertProjectActivity = InferInsertModel<typeof projectActivity>;
 export type InsertProjectNote = InferInsertModel<typeof projectNotes>;
-export declare const PROJECT_ROLES: readonly ["owner", "manager", "contributor", "viewer"];
-export type ProjectRole = (typeof PROJECT_ROLES)[number];
 /**
  * ProjectStatus is setup-controlled and therefore not a fixed union.
  * Keep this as a string to avoid drift between UI/constants and DB.
@@ -862,6 +744,6 @@ export declare const DEFAULT_PROJECT_STATUS_KEYS: readonly ["draft", "active", "
 export type DefaultProjectStatusKey = (typeof DEFAULT_PROJECT_STATUS_KEYS)[number];
 export declare const MILESTONE_STATUSES: readonly ["planned", "in_progress", "completed", "cancelled"];
 export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
-export declare const ACTIVITY_TYPES: readonly ["project.created", "project.updated", "project.status_changed", "project.group_added", "project.group_removed", "project.group_role_changed", "project.link_added", "project.link_removed", "project.link_updated", "project.milestone_created", "project.milestone_updated", "project.milestone_completed", "project.milestone_deleted"];
+export declare const ACTIVITY_TYPES: readonly ["project.created", "project.updated", "project.status_changed", "project.link_added", "project.link_removed", "project.link_updated", "project.milestone_created", "project.milestone_updated", "project.milestone_completed", "project.milestone_deleted"];
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 //# sourceMappingURL=projects.d.ts.map

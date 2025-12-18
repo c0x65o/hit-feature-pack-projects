@@ -36,7 +36,6 @@ export declare function useProjects(options?: UseProjectsOptions): {
         slug?: string;
         description?: string;
         status?: string;
-        ownerGroupId: string;
     }) => Promise<any>;
     updateProject: (id: string, project: Partial<Project>) => Promise<any>;
     deleteProject: (id: string) => Promise<void>;
@@ -82,24 +81,6 @@ export declare function useProjectMilestones(projectId: string | undefined): {
     }) => Promise<void>;
     updateMilestone: (milestoneId: string, milestone: Partial<ProjectMilestone>) => Promise<void>;
     deleteMilestone: (milestoneId: string) => Promise<void>;
-};
-export declare function useProjectGroups(projectId: string | undefined): {
-    groups: {
-        id: string;
-        createdByUserId: string;
-        createdOnTimestamp: Date;
-        lastUpdatedByUserId: string | null;
-        lastUpdatedOnTimestamp: Date;
-        projectId: string;
-        groupId: string;
-        role: string;
-    }[];
-    loading: boolean;
-    error: Error | null;
-    refresh: () => Promise<void>;
-    addGroup: (groupId: string, role: string) => Promise<void>;
-    updateGroupRole: (groupId: string, role: string) => Promise<void>;
-    removeGroup: (groupId: string) => Promise<void>;
 };
 export declare function useProjectLinks(projectId: string | undefined): {
     links: {

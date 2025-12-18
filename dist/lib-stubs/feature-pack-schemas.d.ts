@@ -5,5 +5,5 @@
  * At runtime, the consuming application provides the actual implementation
  * via the generated lib/feature-pack-schemas.ts file.
  */
-export { projects, projectStatuses, projectGroupRoles, projectMilestones, projectLinks, projectActivity, projectNotes, Project, ProjectStatusRecord, ProjectGroupRole, ProjectMilestone, ProjectLink, ProjectActivity, ProjectNote, InsertProject, InsertProjectStatus, InsertProjectGroupRole, InsertProjectMilestone, InsertProjectLink, InsertProjectActivity, InsertProjectNote, PROJECT_ROLES, DEFAULT_PROJECT_STATUS_KEYS, MILESTONE_STATUSES, ACTIVITY_TYPES, type ProjectRole, type ProjectStatus, type DefaultProjectStatusKey, type MilestoneStatus, type ActivityType, } from '../schema/projects';
+export { projects, projectStatuses, projectMilestones, projectLinks, projectActivity, projectNotes, Project, ProjectStatusRecord, ProjectMilestone, ProjectLink, ProjectActivity, ProjectNote, InsertProject, InsertProjectStatus, InsertProjectMilestone, InsertProjectLink, InsertProjectActivity, InsertProjectNote, DEFAULT_PROJECT_STATUS_KEYS, MILESTONE_STATUSES, ACTIVITY_TYPES, type ProjectStatus, type DefaultProjectStatusKey, type MilestoneStatus, type ActivityType, } from '../schema/projects';
 //# sourceMappingURL=feature-pack-schemas.d.ts.map

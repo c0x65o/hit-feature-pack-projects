@@ -6,7 +6,6 @@
  *
  * Core entities:
  * - projects: Main project records
- * - project_group_roles: Auth groups granted project-scoped roles
  * - project_milestones: Project milestones/goals
  * - project_links: Generic links to other entities (no cross-pack FKs)
  * - project_activity: Audit trail for project changes
@@ -58,29 +57,6 @@ export const projectStatuses = pgTable('project_statuses', {
     sortIdx: index('project_statuses_sort_idx').on(table.sortOrder),
     activeIdx: index('project_statuses_active_idx').on(table.isActive),
     defaultIdx: index('project_statuses_default_idx').on(table.isDefault),
-}));
-/**
- * Project Group Roles Table
- * Stores auth groups with project-level roles
- * Roles: owner, manager, contributor, viewer
- */
-export const projectGroupRoles = pgTable('project_group_roles', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    projectId: uuid('project_id')
-        .references(() => projects.id, { onDelete: 'cascade' })
-        .notNull(),
-    groupId: varchar('group_id', { length: 255 }).notNull(), // References auth group (opaque ID, no FK)
-    role: varchar('role', { length: 50 }).notNull().default('contributor'), // owner, manager, contributor, viewer
-    // Audit fields
-    createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
-    createdOnTimestamp: timestamp('created_on_timestamp').defaultNow().notNull(),
-    lastUpdatedByUserId: varchar('last_updated_by_user_id', { length: 255 }),
-    lastUpdatedOnTimestamp: timestamp('last_updated_on_timestamp').defaultNow().notNull(),
-}, (table) => ({
-    projectGroupIdx: unique('project_group_roles_project_group_unique').on(table.projectId, table.groupId),
-    projectIdx: index('project_group_roles_project_idx').on(table.projectId),
-    groupIdx: index('project_group_roles_group_idx').on(table.groupId),
-    roleIdx: index('project_group_roles_role_idx').on(table.role),
 }));
 /**
  * Project Milestones Table
@@ -135,7 +111,6 @@ export const projectLinks = pgTable('project_links', {
  * Project Activity Table
  * Audit trail for project changes and events
  * Records: project.created, project.updated, project.status_changed,
- *          project.group_added, project.group_removed, project.group_role_changed,
  *          project.link_added, project.link_removed,
  *          project.milestone_created, project.milestone_updated
  */
@@ -178,17 +153,10 @@ export const projectNotes = pgTable('project_notes', {
 // RELATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 export const projectsRelations = relations(projects, ({ many }) => ({
-    groups: many(projectGroupRoles),
     milestones: many(projectMilestones),
     links: many(projectLinks),
     activity: many(projectActivity),
     notes: many(projectNotes),
-}));
-export const projectGroupRolesRelations = relations(projectGroupRoles, ({ one }) => ({
-    project: one(projects, {
-        fields: [projectGroupRoles.projectId],
-        references: [projects.id],
-    }),
 }));
 export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
     project: one(projects, {
@@ -214,10 +182,6 @@ export const projectNotesRelations = relations(projectNotes, ({ one }) => ({
         references: [projects.id],
     }),
 }));
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
-export const PROJECT_ROLES = ['owner', 'manager', 'contributor', 'viewer'];
 /**
  * Defaults inserted by migrations (safe baseline).
  */
@@ -227,9 +191,6 @@ export const ACTIVITY_TYPES = [
     'project.created',
     'project.updated',
     'project.status_changed',
-    'project.group_added',
-    'project.group_removed',
-    'project.group_role_changed',
     'project.link_added',
     'project.link_removed',
     'project.link_updated',

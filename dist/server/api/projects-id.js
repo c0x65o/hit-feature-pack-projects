@@ -151,7 +151,7 @@ export async function PUT(request) {
 }
 /**
  * DELETE /api/projects/[id]
- * Delete a project (soft delete by setting status to 'archived')
+ * Permanently delete a project and all related data (cascade deletes handled by DB)
  */
 export async function DELETE(request) {
     try {
@@ -168,7 +168,7 @@ export async function DELETE(request) {
         if (!perm.ok) {
             return NextResponse.json({ error: perm.error }, { status: perm.status });
         }
-        // Get existing project
+        // Get existing project before deletion
         const [existing] = await db
             .select()
             .from(projects)
@@ -177,19 +177,11 @@ export async function DELETE(request) {
         if (!existing) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
-        // Soft delete by archiving
-        const [project] = await db
-            .update(projects)
-            .set({
-            status: 'archived',
-            lastUpdatedByUserId: user.sub,
-            lastUpdatedOnTimestamp: new Date(),
-        })
-            .where(eq(projects.id, id))
-            .returning();
-        // Log activity
-        await logActivity(db, project.id, 'project.status_changed', user.sub, `Project "${project.name}" was archived`, { projectId: project.id, oldStatus: existing.status, newStatus: 'archived' });
-        return NextResponse.json({ data: project });
+        // Hard delete - cascade will handle related records (milestones, links, activity, notes)
+        await db
+            .delete(projects)
+            .where(eq(projects.id, id));
+        return NextResponse.json({ success: true });
     }
     catch (error) {
         console.error('[projects] Delete project error:', error);

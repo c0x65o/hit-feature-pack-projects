@@ -4,18 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
-import { useAuthGroups } from '../hooks/useAuthGroups';
 
 export function CreateProject() {
   const { Page, Card, Button, Input, TextArea, Select } = useUi();
   const { createProject } = useProjects();
   const { activeStatuses, defaultStatusKey, loading: statusesLoading } = useProjectStatuses();
-  const { groups, loading: groupsLoading, error: groupsError } = useAuthGroups();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<string>('active');
-  const [ownerGroupId, setOwnerGroupId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,12 +21,6 @@ export function CreateProject() {
       setStatus((s) => (s ? s : defaultStatusKey));
     }
   }, [defaultStatusKey]);
-
-  useEffect(() => {
-    if (!ownerGroupId && groups.length > 0) {
-      setOwnerGroupId(groups[0].group_id);
-    }
-  }, [groups, ownerGroupId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +31,6 @@ export function CreateProject() {
       return;
     }
 
-    if (!ownerGroupId.trim()) {
-      setError('Owner group is required');
-      return;
-    }
-
     setLoading(true);
     try {
       const project = await createProject({
@@ -52,7 +38,6 @@ export function CreateProject() {
         slug: slug.trim() || undefined,
         description: description.trim() || undefined,
         status,
-        ownerGroupId: ownerGroupId.trim(),
       });
       window.location.href = `/projects/${project.data.id}`;
     } catch (err) {
@@ -66,8 +51,17 @@ export function CreateProject() {
     window.location.href = '/projects';
   };
 
+  const navigate = (path: string) => {
+    window.location.href = path;
+  };
+
+  const breadcrumbs = [
+    { label: 'Projects', href: '/projects' },
+    { label: 'Create Project' },
+  ];
+
   return (
-    <Page title="Create Project">
+    <Page title="Create Project" breadcrumbs={breadcrumbs} onNavigate={navigate}>
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
@@ -119,25 +113,11 @@ export function CreateProject() {
             disabled={loading || statusesLoading}
           />
 
-          <Select
-            label="Owner Group"
-            value={ownerGroupId}
-            onChange={(value) => setOwnerGroupId(String(value))}
-            options={groups.map((g) => ({ value: g.group_id, label: g.group_name }))}
-            placeholder={groupsLoading ? 'Loading groups…' : 'Select owner group'}
-            disabled={loading || groupsLoading}
-          />
-          {groupsError ? (
-            <div style={{ fontSize: '13px', color: 'var(--hit-error, #ef4444)' }}>
-              Failed to load groups from Auth. Ensure the Auth module is linked and you have permission.
-            </div>
-          ) : null}
-
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={loading || !name.trim() || !ownerGroupId.trim()}>
+            <Button type="submit" variant="primary" disabled={loading || !name.trim()}>
               Create Project
             </Button>
           </div>

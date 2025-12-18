@@ -5,7 +5,7 @@ import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 function isAdminUser() {
     if (typeof window === 'undefined')
         return false;
@@ -36,7 +36,7 @@ export function Dashboard() {
     const [sortOrder, setSortOrder] = useState('desc');
     const [page, setPage] = useState(1);
     const pageSize = 25;
-    const { data, loading, error, deleteProject, refresh } = useProjects({
+    const { data, loading, error, refresh } = useProjects({
         page,
         pageSize,
         search,
@@ -45,7 +45,6 @@ export function Dashboard() {
         sortOrder,
     });
     const { activeStatuses } = useProjectStatuses();
-    const [deletingId, setDeletingId] = useState(null);
     const handleRowClick = (row) => {
         const id = String(row?.id || '');
         if (!id)
@@ -57,23 +56,6 @@ export function Dashboard() {
     };
     const handleSetup = () => {
         window.location.href = '/projects/setup/statuses';
-    };
-    const handleDelete = async (e, projectId, projectName) => {
-        e.stopPropagation();
-        if (!window.confirm(`Are you sure you want to archive project "${projectName}"?`)) {
-            return;
-        }
-        try {
-            setDeletingId(projectId);
-            await deleteProject(projectId);
-            await refresh();
-        }
-        catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to delete project');
-        }
-        finally {
-            setDeletingId(null);
-        }
     };
     const columns = [
         {
@@ -103,17 +85,6 @@ export function Dashboard() {
                 const ts = row?.lastUpdatedOnTimestamp;
                 const d = ts ? new Date(ts) : null;
                 return d ? d.toLocaleDateString() : '';
-            },
-        },
-        {
-            key: 'actions',
-            label: '',
-            render: (_value, row) => {
-                const project = row;
-                const projectId = String(project.id || '');
-                const projectName = String(project.name || '');
-                const isDeleting = deletingId === projectId;
-                return (_jsx("div", { style: { display: 'flex', justifyContent: 'flex-end' }, children: _jsx(Button, { variant: "ghost", size: "sm", onClick: (e) => handleDelete(e, projectId, projectName), disabled: isDeleting || loading, title: "Archive project", children: _jsx(Trash2, { size: 16, style: { color: 'var(--hit-error, #ef4444)' } }) }) }));
             },
         },
     ];

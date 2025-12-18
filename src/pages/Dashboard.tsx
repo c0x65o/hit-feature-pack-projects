@@ -5,7 +5,7 @@ import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
-import { MoreVertical, Plus, Search, Trash2 } from 'lucide-react';
+import { MoreVertical, Plus, Search } from 'lucide-react';
 
 function isAdminUser(): boolean {
   if (typeof window === 'undefined') return false;
@@ -35,7 +35,7 @@ export function Dashboard() {
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
-  const { data, loading, error, deleteProject, refresh } = useProjects({
+  const { data, loading, error, refresh } = useProjects({
     page,
     pageSize,
     search,
@@ -44,7 +44,6 @@ export function Dashboard() {
     sortOrder,
   });
   const { activeStatuses } = useProjectStatuses();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleRowClick = (row: Record<string, unknown>) => {
     const id = String((row as any)?.id || '');
@@ -58,22 +57,6 @@ export function Dashboard() {
 
   const handleSetup = () => {
     window.location.href = '/projects/setup/statuses';
-  };
-
-  const handleDelete = async (e: React.MouseEvent, projectId: string, projectName: string) => {
-    e.stopPropagation();
-    if (!window.confirm(`Are you sure you want to archive project "${projectName}"?`)) {
-      return;
-    }
-    try {
-      setDeletingId(projectId);
-      await deleteProject(projectId);
-      await refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete project');
-    } finally {
-      setDeletingId(null);
-    }
   };
 
   const columns = [
@@ -114,29 +97,6 @@ export function Dashboard() {
         const ts = (row as any)?.lastUpdatedOnTimestamp;
         const d = ts ? new Date(ts) : null;
         return d ? d.toLocaleDateString() : '';
-      },
-    },
-    {
-      key: 'actions',
-      label: '',
-      render: (_value: unknown, row: Record<string, unknown>) => {
-        const project = row as any;
-        const projectId = String(project.id || '');
-        const projectName = String(project.name || '');
-        const isDeleting = deletingId === projectId;
-        return (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => handleDelete(e, projectId, projectName)}
-              disabled={isDeleting || loading}
-              title="Archive project"
-            >
-              <Trash2 size={16} style={{ color: 'var(--hit-error, #ef4444)' }} />
-            </Button>
-          </div>
-        );
       },
     },
   ];

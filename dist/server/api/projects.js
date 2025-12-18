@@ -1,10 +1,10 @@
 // src/server/api/projects.ts
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { projects, projectGroupRoles, projectStatuses, projectActivity, } from '@/lib/feature-pack-schemas';
+import { projects, projectStatuses, projectActivity, } from '@/lib/feature-pack-schemas';
 import { eq, desc, asc, like, sql, and, or } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
-import { getUserGroupIds, isAdmin } from '../lib/access';
+import { isAdmin } from '../lib/access';
 // Required for Next.js App Router
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -140,17 +140,6 @@ export async function POST(request) {
         if (existing.length > 0) {
             return NextResponse.json({ error: 'A project with this slug already exists' }, { status: 409 });
         }
-        // Determine owner group (project-scoped access is via Auth groups, not per-user membership)
-        const groupIds = await getUserGroupIds(db, user);
-        const admin = isAdmin(user);
-        const requestedOwnerGroupId = typeof body.ownerGroupId === 'string' && body.ownerGroupId.trim() ? body.ownerGroupId.trim() : null;
-        const ownerGroupId = requestedOwnerGroupId || groupIds[0] || null;
-        if (!ownerGroupId) {
-            return NextResponse.json({ error: 'Project requires an owner group. Provide ownerGroupId or ensure the user has at least one group.' }, { status: 400 });
-        }
-        if (!admin && !groupIds.includes(ownerGroupId)) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
         if (body.status !== undefined && body.status !== null) {
             const statusKey = String(body.status).trim();
             if (!statusKey) {
@@ -174,16 +163,8 @@ export async function POST(request) {
             lastUpdatedByUserId: user.sub,
         })
             .returning();
-        // Grant the owner group the project owner role
-        await db.insert(projectGroupRoles).values({
-            projectId: project.id,
-            groupId: ownerGroupId,
-            role: 'owner',
-            createdByUserId: user.sub,
-            lastUpdatedByUserId: user.sub,
-        });
         // Log activity
-        await logActivity(db, project.id, 'project.created', user.sub, `Project "${project.name}" was created`, { projectId: project.id, projectName: project.name, ownerGroupId });
+        await logActivity(db, project.id, 'project.created', user.sub, `Project "${project.name}" was created`, { projectId: project.id, projectName: project.name });
         return NextResponse.json({ data: project }, { status: 201 });
     }
     catch (error) {

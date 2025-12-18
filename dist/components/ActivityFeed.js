@@ -5,7 +5,6 @@ import { useUi } from '@hit/ui-kit';
 const ACTIVITY_FILTERS = [
     { value: '', label: 'All' },
     { value: 'milestone', label: 'Milestones' },
-    { value: 'group', label: 'Groups' },
     { value: 'link', label: 'Links' },
 ];
 export function ActivityFeed({ activities, loading, filter = '', onFilterChange }) {

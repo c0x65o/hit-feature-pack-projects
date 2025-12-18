@@ -6,4 +6,4 @@
  * via the generated lib/feature-pack-schemas.ts file.
  */
 // Re-export schema tables from this feature pack
-export { projects, projectStatuses, projectGroupRoles, projectMilestones, projectLinks, projectActivity, projectNotes, PROJECT_ROLES, DEFAULT_PROJECT_STATUS_KEYS, MILESTONE_STATUSES, ACTIVITY_TYPES, } from '../schema/projects';
+export { projects, projectStatuses, projectMilestones, projectLinks, projectActivity, projectNotes, DEFAULT_PROJECT_STATUS_KEYS, MILESTONE_STATUSES, ACTIVITY_TYPES, } from '../schema/projects';

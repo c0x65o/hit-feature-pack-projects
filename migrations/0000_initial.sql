@@ -1,6 +1,6 @@
 -- Feature Pack: projects
 -- Initial schema migration
--- Creates tables for projects, project_statuses, project_group_roles, project_milestones, project_links, and project_activity
+-- Creates tables for projects, project_statuses, project_milestones, project_links, and project_activity
 -- Idempotent (safe to re-run with IF NOT EXISTS)
 
 -- Projects table
@@ -46,25 +46,8 @@ VALUES
   ('archived', 'Archived', '#94a3b8', 50, FALSE, TRUE)
 ON CONFLICT ("key") DO NOTHING;
 
--- Remove legacy per-user membership table (Projects uses Auth groups for access)
+-- Remove legacy per-user membership table
 DROP TABLE IF EXISTS "project_members";
-
--- Project group roles table (project-scoped roles granted via Auth groups)
-CREATE TABLE IF NOT EXISTS "project_group_roles" (
-  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  "project_id" UUID NOT NULL REFERENCES "projects"("id") ON DELETE CASCADE,
-  "group_id" VARCHAR(255) NOT NULL,
-  "role" VARCHAR(50) NOT NULL DEFAULT 'contributor',
-  "created_by_user_id" VARCHAR(255) NOT NULL,
-  "created_on_timestamp" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-  "last_updated_by_user_id" VARCHAR(255),
-  "last_updated_on_timestamp" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "project_group_roles_project_group_unique" ON "project_group_roles" ("project_id", "group_id");
-CREATE INDEX IF NOT EXISTS "project_group_roles_project_idx" ON "project_group_roles" ("project_id");
-CREATE INDEX IF NOT EXISTS "project_group_roles_group_idx" ON "project_group_roles" ("group_id");
-CREATE INDEX IF NOT EXISTS "project_group_roles_role_idx" ON "project_group_roles" ("role");
 
 -- Project milestones table
 CREATE TABLE IF NOT EXISTS "project_milestones" (

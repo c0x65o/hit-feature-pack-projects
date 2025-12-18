@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Project, ProjectMilestone, ProjectGroupRole, ProjectLink, ProjectActivity } from '../schema/projects';
+import type { Project, ProjectMilestone, ProjectLink, ProjectActivity } from '../schema/projects';
 
 interface UseProjectsOptions {
   page?: number;
@@ -59,7 +59,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
     fetchData();
   }, [fetchData]);
 
-  const createProject = async (project: { name: string; slug?: string; description?: string; status?: string; ownerGroupId: string }) => {
+  const createProject = async (project: { name: string; slug?: string; description?: string; status?: string }) => {
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -209,80 +209,6 @@ export function useProjectMilestones(projectId: string | undefined) {
   };
 
   return { milestones, loading, error, refresh: fetchData, createMilestone, updateMilestone, deleteMilestone };
-}
-
-export function useProjectGroups(projectId: string | undefined) {
-  const [groups, setGroups] = useState<ProjectGroupRole[]>([]);
-  const [loading, setLoading] = useState(Boolean(projectId));
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(async () => {
-    if (!projectId) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/projects/${projectId}/groups`);
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error || 'Failed to fetch groups');
-      }
-      const json = await res.json();
-      setGroups(json?.data ?? []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const addGroup = async (groupId: string, role: string) => {
-    if (!projectId) throw new Error('Project ID required');
-    const res = await fetch(`/api/projects/${projectId}/groups`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ groupId, role }),
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      throw new Error(json?.error || 'Failed to add group');
-    }
-    await fetchData();
-  };
-
-  const updateGroupRole = async (groupId: string, role: string) => {
-    if (!projectId) throw new Error('Project ID required');
-    const res = await fetch(`/api/projects/${projectId}/groups/${groupId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }),
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      throw new Error(json?.error || 'Failed to update group role');
-    }
-    await fetchData();
-  };
-
-  const removeGroup = async (groupId: string) => {
-    if (!projectId) throw new Error('Project ID required');
-    const res = await fetch(`/api/projects/${projectId}/groups/${groupId}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      throw new Error(json?.error || 'Failed to remove group');
-    }
-    await fetchData();
-  };
-
-  return { groups, loading, error, refresh: fetchData, addGroup, updateGroupRole, removeGroup };
 }
 
 export function useProjectLinks(projectId: string | undefined) {

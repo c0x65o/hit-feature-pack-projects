@@ -21,11 +21,11 @@ export declare function PUT(request: NextRequest): Promise<NextResponse<{
 }>>;
 /**
  * DELETE /api/projects/[id]
- * Delete a project (soft delete by setting status to 'archived')
+ * Permanently delete a project and all related data (cascade deletes handled by DB)
  */
 export declare function DELETE(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
-    data: any;
+    success: boolean;
 }>>;
 //# sourceMappingURL=projects-id.d.ts.map

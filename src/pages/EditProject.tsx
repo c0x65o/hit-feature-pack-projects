@@ -2,16 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUi } from '@hit/ui-kit';
-import { useProject, useProjects, useProjectLinks } from '../hooks/useProjects';
+import { useProject, useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
-import { LinksEditor } from '../components/LinksEditor';
 
 export function EditProject(props: { id?: string }) {
   const { Page, Card, Button, Input, TextArea, Select } = useUi();
   const projectId = props.id;
   const { project, loading: projectLoading } = useProject(projectId);
   const { updateProject } = useProjects();
-  const { links, addLink, removeLink } = useProjectLinks(projectId);
   const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -63,9 +61,24 @@ export function EditProject(props: { id?: string }) {
     }
   };
 
+  const navigate = (path: string) => {
+    window.location.href = path;
+  };
+
+  const breadcrumbs = project
+    ? [
+        { label: 'Projects', href: '/projects' },
+        { label: project.name, href: `/projects/${projectId}` },
+        { label: 'Edit' },
+      ]
+    : [
+        { label: 'Projects', href: '/projects' },
+        { label: 'Edit Project' },
+      ];
+
   if (projectLoading) {
     return (
-      <Page title="Edit Project">
+      <Page title="Edit Project" breadcrumbs={breadcrumbs} onNavigate={navigate}>
         <Card>
           <div style={{ textAlign: 'center', padding: '24px' }}>Loading project...</div>
         </Card>
@@ -75,7 +88,7 @@ export function EditProject(props: { id?: string }) {
 
   if (!project) {
     return (
-      <Page title="Edit Project">
+      <Page title="Edit Project" breadcrumbs={breadcrumbs} onNavigate={navigate}>
         <Card>
           <div style={{ textAlign: 'center', padding: '24px', color: 'var(--hit-error, #ef4444)' }}>
             Project not found
@@ -91,7 +104,7 @@ export function EditProject(props: { id?: string }) {
   }
 
   return (
-    <Page title="Edit Project">
+    <Page title="Edit Project" breadcrumbs={breadcrumbs} onNavigate={navigate}>
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
@@ -153,8 +166,6 @@ export function EditProject(props: { id?: string }) {
           </div>
         </form>
       </Card>
-
-      <LinksEditor links={links} onAdd={addLink} onRemove={removeLink} canManage={true} />
     </Page>
   );
 }
