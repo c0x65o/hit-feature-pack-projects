@@ -67,30 +67,25 @@ schema:
   exports:
     - projects
     - projectStatuses
-    - projectGroupRoles
     - projectMilestones
     - projectLinks
     - projectActivity
     - projectNotes
     - Project
     - ProjectStatusRecord
-    - ProjectGroupRole
     - ProjectMilestone
     - ProjectLink
     - ProjectActivity
     - ProjectNote
     - InsertProject
     - InsertProjectStatus
-    - InsertProjectGroupRole
     - InsertProjectMilestone
     - InsertProjectLink
     - InsertProjectActivity
     - InsertProjectNote
-    - PROJECT_ROLES
     - DEFAULT_PROJECT_STATUS_KEYS
     - MILESTONE_STATUSES
     - ACTIVITY_TYPES
-    - ProjectRole
     - ProjectStatus
     - DefaultProjectStatusKey
     - MilestoneStatus
@@ -110,15 +105,6 @@ api:
       methods: [GET, PUT, DELETE]
       handler: "@hit/feature-pack-projects/server/api/projects-id"
       description: "Get, update, or delete a specific project"
-    # Project Groups (Auth groups granted project roles)
-    - path: /api/projects/[projectId]/groups
-      methods: [GET, POST]
-      handler: "@hit/feature-pack-projects/server/api/projects-groups"
-      description: "List project groups (GET) or grant a group role (POST)"
-    - path: /api/projects/[projectId]/groups/[groupId]
-      methods: [GET, PUT, DELETE]
-      handler: "@hit/feature-pack-projects/server/api/projects-groups-id"
-      description: "Get, update, or remove a project group role"
     # Project Milestones
     - path: /api/projects/[projectId]/milestones
       methods: [GET, POST]
