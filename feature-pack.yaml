@@ -147,3 +147,15 @@ requires:
 dependencies:
   feature_packs:
     - name: dashboard-shell
+
+# ─────────────────────────────────────────────────────────────────────────────
+# METRICS - Feature pack metric definitions
+# ─────────────────────────────────────────────────────────────────────────────
+metrics:
+  definitions:
+    - key: fp.projects.project_count
+      label: Project Count
+      unit: count
+      rollup_strategy: last
+      entity_kinds: [project]
+      default_granularity: daily
