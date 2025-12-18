@@ -6,6 +6,28 @@ import { useProjects } from '../hooks/useProjects';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { Plus } from 'lucide-react';
+function isAdminUser() {
+    if (typeof window === 'undefined')
+        return false;
+    const token = localStorage.getItem('hit_token') || '';
+    if (!token)
+        return false;
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3)
+            return false;
+        const payload = JSON.parse(atob(parts[1]));
+        const roles = Array.isArray(payload.roles)
+            ? payload.roles.map((r) => String(r))
+            : payload.role
+                ? [String(payload.role)]
+                : [];
+        return roles.includes('admin');
+    }
+    catch {
+        return false;
+    }
+}
 export function Dashboard() {
     const { Page, Card, Button, Input, Select, Table, EmptyState } = useUi();
     const [search, setSearch] = useState('');
@@ -31,6 +53,9 @@ export function Dashboard() {
     };
     const handleCreate = () => {
         window.location.href = '/projects/new';
+    };
+    const handleSetup = () => {
+        window.location.href = '/projects/setup/statuses';
     };
     const columns = [
         {
@@ -65,7 +90,7 @@ export function Dashboard() {
     ];
     const projects = data?.data || [];
     const pagination = data?.pagination;
-    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: _jsxs("div", { style: { display: 'flex', flexDirection: 'column', gap: '16px' }, children: [_jsxs("div", { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }, children: [_jsx("div", { style: { flex: '1 1 300px', minWidth: '200px' }, children: _jsx(Input, { placeholder: "Search by name, slug, description", value: search, onChange: setSearch, style: { position: 'relative' } }) }), _jsx("div", { style: { minWidth: '150px' }, children: _jsx(Select, { placeholder: "All Statuses", value: statusFilter, onChange: setStatusFilter, options: [
+    return (_jsx(Page, { title: "Projects", actions: _jsxs("div", { style: { display: 'flex', gap: '8px' }, children: [isAdminUser() ? (_jsx(Button, { variant: "secondary", onClick: handleSetup, children: "Setup" })) : null, _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] })] }), children: _jsx(Card, { children: _jsxs("div", { style: { display: 'flex', flexDirection: 'column', gap: '16px' }, children: [_jsxs("div", { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }, children: [_jsx("div", { style: { flex: '1 1 300px', minWidth: '200px' }, children: _jsx(Input, { placeholder: "Search by name, slug, description", value: search, onChange: setSearch, style: { position: 'relative' } }) }), _jsx("div", { style: { minWidth: '150px' }, children: _jsx(Select, { placeholder: "All Statuses", value: statusFilter, onChange: setStatusFilter, options: [
                                         { value: '', label: 'All Statuses' },
                                         ...activeStatuses.map((s) => ({ value: s.key, label: s.label })),
                                     ] }) }), _jsx("div", { style: { minWidth: '180px' }, children: _jsx(Select, { placeholder: "Sort by", value: `${sortBy}-${sortOrder}`, onChange: (value) => {

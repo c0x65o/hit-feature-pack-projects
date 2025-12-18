@@ -7,6 +7,25 @@ import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { MoreVertical, Plus, Search } from 'lucide-react';
 
+function isAdminUser(): boolean {
+  if (typeof window === 'undefined') return false;
+  const token = localStorage.getItem('hit_token') || '';
+  if (!token) return false;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1]));
+    const roles: string[] = Array.isArray(payload.roles)
+      ? payload.roles.map((r: any) => String(r))
+      : payload.role
+        ? [String(payload.role)]
+        : [];
+    return roles.includes('admin');
+  } catch {
+    return false;
+  }
+}
+
 export function Dashboard() {
   const { Page, Card, Button, Input, Select, Table, EmptyState } = useUi();
   const [search, setSearch] = useState('');
@@ -34,6 +53,10 @@ export function Dashboard() {
 
   const handleCreate = () => {
     window.location.href = '/projects/new';
+  };
+
+  const handleSetup = () => {
+    window.location.href = '/projects/setup/statuses';
   };
 
   const columns = [
@@ -85,10 +108,17 @@ export function Dashboard() {
     <Page
       title="Projects"
       actions={
-        <Button variant="primary" onClick={handleCreate}>
-          <Plus size={16} style={{ marginRight: '8px' }} />
-          Create Project
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {isAdminUser() ? (
+            <Button variant="secondary" onClick={handleSetup}>
+              Setup
+            </Button>
+          ) : null}
+          <Button variant="primary" onClick={handleCreate}>
+            <Plus size={16} style={{ marginRight: '8px' }} />
+            Create Project
+          </Button>
+        </div>
       }
     >
       <Card>
