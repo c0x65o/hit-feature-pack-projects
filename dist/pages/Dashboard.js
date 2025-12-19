@@ -1,8 +1,9 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
+import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { Plus } from 'lucide-react';
 function isAdminUser() {
@@ -31,6 +32,8 @@ export function Dashboard() {
     const { Page, Card, Button, DataTable } = useUi();
     const [page, setPage] = useState(1);
     const pageSize = 25;
+    // Load available statuses for the status filter dropdown
+    const { activeStatuses } = useProjectStatuses();
     // View state - managed by DataTable's view system when enableViews is true
     const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived
     const [sortConfig, setSortConfig] = useState({
@@ -61,6 +64,15 @@ export function Dashboard() {
         sortBy: sortConfig.sortBy,
         sortOrder: sortConfig.sortOrder,
     });
+    // Build status options from loaded statuses (plus archived which is always available)
+    const statusOptions = useMemo(() => {
+        const opts = activeStatuses.map((s) => ({ value: s.key, label: s.label }));
+        // Add archived if not already present
+        if (!opts.find((o) => o.value === 'archived')) {
+            opts.push({ value: 'archived', label: 'Archived' });
+        }
+        return opts;
+    }, [activeStatuses]);
     const handleRowClick = (row) => {
         const id = String(row?.id || '');
         if (!id)
@@ -73,11 +85,13 @@ export function Dashboard() {
     const handleSetup = () => {
         window.location.href = '/projects/setup/statuses';
     };
-    const columns = [
+    const columns = useMemo(() => [
         {
             key: 'name',
             label: 'Name',
             sortable: true,
+            filterType: 'string',
+            hideable: false, // Name column should always be visible
             render: (_value, row) => {
                 const project = row;
                 return (_jsx("a", { href: `/projects/${String(project.id)}`, style: {
@@ -94,19 +108,22 @@ export function Dashboard() {
             key: 'status',
             label: 'Status',
             sortable: true,
+            filterType: 'select',
+            filterOptions: statusOptions,
             render: (_value, row) => (_jsx(ProjectStatusBadge, { status: String(row?.status || '') })),
         },
         {
             key: 'lastUpdatedOnTimestamp',
             label: 'Updated',
             sortable: true,
+            filterType: 'date',
             render: (_value, row) => {
                 const ts = row?.lastUpdatedOnTimestamp;
                 const d = ts ? new Date(ts) : null;
                 return d ? d.toLocaleDateString() : '';
             },
         },
-    ];
+    ], [statusOptions, handleRowClick]);
     const projects = data?.data || [];
     const pagination = data?.pagination;
     return (_jsx(Page, { title: "Projects", actions: _jsxs("div", { style: { display: 'flex', gap: '8px' }, children: [isAdminUser() ? (_jsx(Button, { variant: "secondary", onClick: handleSetup, children: "Setup" })) : null, _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] })] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track milestones, linked systems, and activity.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: handleViewFiltersChange })) }) }));

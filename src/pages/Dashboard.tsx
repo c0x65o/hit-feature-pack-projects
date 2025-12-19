@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
+import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { Plus } from 'lucide-react';
 
@@ -29,6 +30,9 @@ export function Dashboard() {
   const { Page, Card, Button, DataTable } = useUi();
   const [page, setPage] = useState(1);
   const pageSize = 25;
+  
+  // Load available statuses for the status filter dropdown
+  const { activeStatuses } = useProjectStatuses();
   
   // View state - managed by DataTable's view system when enableViews is true
   const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived
@@ -60,6 +64,16 @@ export function Dashboard() {
     sortBy: sortConfig.sortBy,
     sortOrder: sortConfig.sortOrder,
   });
+  
+  // Build status options from loaded statuses (plus archived which is always available)
+  const statusOptions = useMemo(() => {
+    const opts = activeStatuses.map((s) => ({ value: s.key, label: s.label }));
+    // Add archived if not already present
+    if (!opts.find((o) => o.value === 'archived')) {
+      opts.push({ value: 'archived', label: 'Archived' });
+    }
+    return opts;
+  }, [activeStatuses]);
 
   const handleRowClick = (row: Record<string, unknown>) => {
     const id = String((row as any)?.id || '');
@@ -75,11 +89,13 @@ export function Dashboard() {
     window.location.href = '/projects/setup/statuses';
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       key: 'name',
       label: 'Name',
       sortable: true,
+      filterType: 'string' as const,
+      hideable: false, // Name column should always be visible
       render: (_value: unknown, row: Record<string, unknown>) => {
         const project = row as any;
         return (
@@ -104,6 +120,8 @@ export function Dashboard() {
       key: 'status',
       label: 'Status',
       sortable: true,
+      filterType: 'select' as const,
+      filterOptions: statusOptions,
       render: (_value: unknown, row: Record<string, unknown>) => (
         <ProjectStatusBadge status={String((row as any)?.status || '')} />
       ),
@@ -112,13 +130,14 @@ export function Dashboard() {
       key: 'lastUpdatedOnTimestamp',
       label: 'Updated',
       sortable: true,
+      filterType: 'date' as const,
       render: (_value: unknown, row: Record<string, unknown>) => {
         const ts = (row as any)?.lastUpdatedOnTimestamp;
         const d = ts ? new Date(ts) : null;
         return d ? d.toLocaleDateString() : '';
       },
     },
-  ];
+  ], [statusOptions, handleRowClick]);
 
   const projects = data?.data || [];
   const pagination = data?.pagination;
