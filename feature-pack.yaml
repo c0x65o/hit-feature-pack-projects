@@ -26,7 +26,7 @@ routes:
   - path: /projects/setup/statuses/new
     page: CreateProjectStatus
     roles: [admin]
-  - path: /projects/setup/statuses/[id]/edit
+  - path: /projects/setup/statuses/[id]
     page: EditProjectStatus
     roles: [admin]
 

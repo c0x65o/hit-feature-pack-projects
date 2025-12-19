@@ -21,7 +21,7 @@ export function ProjectStatusesSetup() {
   const handleRowClick = (row: Record<string, unknown>) => {
     const id = String((row as any)?.id || '');
     if (!id) return;
-    window.location.href = `/projects/setup/statuses/${id}/edit`;
+    window.location.href = `/projects/setup/statuses/${id}`;
   };
 
   const handleCreate = () => {
@@ -45,7 +45,7 @@ export function ProjectStatusesSetup() {
           const r = row as any;
           return (
             <a
-              href={`/projects/setup/statuses/${r.id}/edit`}
+              href={`/projects/setup/statuses/${r.id}`}
               style={{
                 color: 'var(--hit-primary, #3b82f6)',
                 textDecoration: 'none',

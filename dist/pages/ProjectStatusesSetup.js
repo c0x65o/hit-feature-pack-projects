@@ -16,7 +16,7 @@ export function ProjectStatusesSetup() {
         const id = String(row?.id || '');
         if (!id)
             return;
-        window.location.href = `/projects/setup/statuses/${id}/edit`;
+        window.location.href = `/projects/setup/statuses/${id}`;
     };
     const handleCreate = () => {
         window.location.href = '/projects/setup/statuses/new';
@@ -35,7 +35,7 @@ export function ProjectStatusesSetup() {
             hideable: false,
             render: (_value, row) => {
                 const r = row;
-                return (_jsx("a", { href: `/projects/setup/statuses/${r.id}/edit`, style: {
+                return (_jsx("a", { href: `/projects/setup/statuses/${r.id}`, style: {
                         color: 'var(--hit-primary, #3b82f6)',
                         textDecoration: 'none',
                         fontWeight: '500',

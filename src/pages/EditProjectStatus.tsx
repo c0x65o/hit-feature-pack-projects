@@ -6,7 +6,7 @@ import { useProjectStatus } from '../hooks/useProjectStatuses';
 import { Trash2 } from 'lucide-react';
 
 export function EditProjectStatus(props: { id?: string }) {
-  const { Page, Card, Button, Input, Select } = useUi();
+  const { Page, Card, Button, Input, Select, AlertDialog } = useUi();
   const alertDialog = useAlertDialog();
   const statusId = props.id;
   const { status, loading: statusLoading, updateStatus, deleteStatus } = useProjectStatus(statusId);
@@ -90,14 +90,13 @@ export function EditProjectStatus(props: { id?: string }) {
         { label: 'Projects', href: '/projects' },
         { label: 'Setup', href: '/projects/setup/statuses' },
         { label: 'Statuses', href: '/projects/setup/statuses' },
-        { label: status.label, href: `/projects/setup/statuses/${statusId}` },
-        { label: 'Edit' },
+        { label: status.label },
       ]
     : [
         { label: 'Projects', href: '/projects' },
         { label: 'Setup', href: '/projects/setup/statuses' },
         { label: 'Statuses', href: '/projects/setup/statuses' },
-        { label: 'Edit Status' },
+        { label: 'Status' },
       ];
 
   if (statusLoading) {
@@ -128,8 +127,10 @@ export function EditProjectStatus(props: { id?: string }) {
   }
 
   return (
-    <Page title="Edit Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
-      <Card>
+    <>
+      <AlertDialog {...alertDialog.props} />
+      <Page title="Edit Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
+        <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
             <div
@@ -232,6 +233,7 @@ export function EditProjectStatus(props: { id?: string }) {
         </form>
       </Card>
     </Page>
+    </>
   );
 }
 
