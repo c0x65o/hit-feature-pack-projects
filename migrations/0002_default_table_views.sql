@@ -2,7 +2,44 @@
 -- Seed default views for Projects table
 -- Idempotent (safe to re-run)
 
--- 1. Insert "Active Projects" view (default) - hides archived
+-- 1. Insert "Status Group" view (default) - groups by status
+INSERT INTO "table_views" (
+  "id",
+  "user_id",
+  "table_id",
+  "name",
+  "description",
+  "is_default",
+  "is_system",
+  "is_shared",
+  "column_visibility",
+  "sorting",
+  "group_by",
+  "created_at",
+  "updated_at"
+)
+SELECT
+  gen_random_uuid(),
+  'system',
+  'projects',
+  'Status Group',
+  'Groups projects by status',
+  TRUE,
+  TRUE,
+  FALSE,
+  NULL,
+  '[{"id": "lastUpdatedOnTimestamp", "desc": true}]'::jsonb,
+  '{"field": "status", "sortOrder": ["Backburner", "Not Launched", "Draft", "Active", "Completed", "Cancelled", "Archived"]}'::jsonb,
+  NOW(),
+  NOW()
+WHERE NOT EXISTS (
+  SELECT 1 FROM "table_views"
+  WHERE "table_id" = 'projects'
+    AND "name" = 'Status Group'
+    AND "is_system" = TRUE
+);
+
+-- 2. Insert "Active Projects" view - hides archived
 INSERT INTO "table_views" (
   "id",
   "user_id",
@@ -23,7 +60,7 @@ SELECT
   'projects',
   'Active Projects',
   'Shows only active projects, hiding archived ones',
-  TRUE,
+  FALSE,
   TRUE,
   FALSE,
   NULL,
@@ -37,7 +74,7 @@ WHERE NOT EXISTS (
     AND "is_system" = TRUE
 );
 
--- 2. Insert "All Projects" view - shows everything
+-- 3. Insert "All Projects" view - shows everything
 INSERT INTO "table_views" (
   "id",
   "user_id",
@@ -72,7 +109,7 @@ WHERE NOT EXISTS (
     AND "is_system" = TRUE
 );
 
--- 3. Insert filter to exclude archived status for "Active Projects" view
+-- 4. Insert filter to exclude archived status for "Active Projects" view
 INSERT INTO "table_view_filters" (
   "id",
   "view_id",

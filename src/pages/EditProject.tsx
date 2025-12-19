@@ -23,7 +23,7 @@ export function EditProject(props: { id?: string }) {
       setName(project.name);
       setSlug(project.slug || '');
       setDescription(project.description || '');
-            setStatus(String(project.status || 'Active'));
+            setStatus(String((project as any).statusLabel || 'Active'));
     }
   }, [project]);
 
@@ -43,8 +43,8 @@ export function EditProject(props: { id?: string }) {
         name: name.trim(),
         slug: slug.trim() || null,
         description: description.trim() || null,
-        status,
-      });
+        status, // API accepts status (label) for backwards compat
+      } as any);
       window.location.href = `/projects/${projectId}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update project');

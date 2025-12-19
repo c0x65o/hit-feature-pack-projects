@@ -58,13 +58,31 @@ async function logActivity(
   });
 }
 
-async function isValidProjectStatus(db: ReturnType<typeof getDb>, label: string): Promise<boolean> {
+async function getStatusIdByLabel(db: ReturnType<typeof getDb>, label: string): Promise<string | null> {
   const [row] = await db
-    .select({ label: projectStatuses.label, isActive: projectStatuses.isActive })
+    .select({ id: projectStatuses.id, isActive: projectStatuses.isActive })
     .from(projectStatuses)
     .where(eq(projectStatuses.label, label))
     .limit(1);
+  return row?.isActive ? row.id : null;
+}
+
+async function isValidProjectStatusId(db: ReturnType<typeof getDb>, statusId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: projectStatuses.id, isActive: projectStatuses.isActive })
+    .from(projectStatuses)
+    .where(eq(projectStatuses.id, statusId))
+    .limit(1);
   return Boolean(row && row.isActive);
+}
+
+async function getStatusLabel(db: ReturnType<typeof getDb>, statusId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ label: projectStatuses.label })
+    .from(projectStatuses)
+    .where(eq(projectStatuses.id, statusId))
+    .limit(1);
+  return row?.label ?? null;
 }
 
 /**
@@ -90,8 +108,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: perm.error }, { status: perm.status });
     }
     const [project] = await db
-      .select()
+      .select({
+        id: projects.id,
+        name: projects.name,
+        slug: projects.slug,
+        description: projects.description,
+        statusId: projects.statusId,
+        statusLabel: projectStatuses.label,
+        statusColor: projectStatuses.color,
+        companyId: projects.companyId,
+        createdByUserId: projects.createdByUserId,
+        createdOnTimestamp: projects.createdOnTimestamp,
+        lastUpdatedByUserId: projects.lastUpdatedByUserId,
+        lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
+      })
       .from(projects)
+      .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id))
       .where(eq(projects.id, id))
       .limit(1);
 
@@ -161,16 +193,20 @@ export async function PUT(request: NextRequest) {
       updates.description = body.description || null;
     }
 
-    if (body.status !== undefined) {
-      const statusLabel = String(body.status).trim();
-      if (!statusLabel) {
-        return NextResponse.json({ error: 'Status cannot be empty' }, { status: 400 });
-      }
-      const ok = await isValidProjectStatus(db, statusLabel);
+    // Handle statusId or status (label for backwards compat)
+    if (body.statusId !== undefined) {
+      const ok = await isValidProjectStatusId(db, body.statusId);
       if (!ok) {
-        return NextResponse.json({ error: `Invalid status: ${statusLabel}` }, { status: 400 });
+        return NextResponse.json({ error: `Invalid statusId: ${body.statusId}` }, { status: 400 });
       }
-      updates.status = statusLabel;
+      updates.statusId = body.statusId;
+    } else if (body.status !== undefined) {
+      // Accept label for API backwards compatibility, resolve to ID
+      const statusId = await getStatusIdByLabel(db, body.status);
+      if (!statusId) {
+        return NextResponse.json({ error: `Invalid status: ${body.status}` }, { status: 400 });
+      }
+      updates.statusId = statusId;
     }
 
     if (body.slug !== undefined) {
@@ -214,14 +250,19 @@ export async function PUT(request: NextRequest) {
       activityMetadata.newCompanyId = updates.companyId;
     }
     
-    if (body.status && body.status !== existing.status) {
+    // Check if status changed (compare IDs)
+    const statusChanged = updates.statusId && updates.statusId !== existing.statusId;
+    if (statusChanged) {
+      // Get labels for the activity log description
+      const oldLabel = await getStatusLabel(db, existing.statusId);
+      const newLabel = await getStatusLabel(db, project.statusId);
       await logActivity(
         db,
         project.id,
         'project.status_changed',
         user.sub,
-        `Project status changed from "${existing.status}" to "${project.status}"`,
-        { ...activityMetadata, oldStatus: existing.status, newStatus: project.status }
+        `Project status changed from "${oldLabel}" to "${newLabel}"`,
+        { ...activityMetadata, oldStatusId: existing.statusId, newStatusId: project.statusId }
       );
     } else {
       await logActivity(

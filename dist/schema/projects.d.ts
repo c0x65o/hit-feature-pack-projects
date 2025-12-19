@@ -73,16 +73,16 @@ export declare const projects: import("drizzle-orm/pg-core").PgTableWithColumns<
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
-        status: import("drizzle-orm/pg-core").PgColumn<{
-            name: "status";
+        statusId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "status_id";
             tableName: "projects";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgUUID";
             data: string;
             driverParam: string;
             notNull: true;
-            hasDefault: true;
-            enumValues: [string, ...string[]];
+            hasDefault: false;
+            enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
         companyId: import("drizzle-orm/pg-core").PgColumn<{
@@ -703,10 +703,14 @@ export declare const projectNotes: import("drizzle-orm/pg-core").PgTableWithColu
     dialect: "pg";
 }>;
 export declare const projectsRelations: import("drizzle-orm").Relations<"projects", {
+    status: import("drizzle-orm").One<"project_statuses", true>;
     milestones: import("drizzle-orm").Many<"project_milestones">;
     links: import("drizzle-orm").Many<"project_links">;
     activity: import("drizzle-orm").Many<"project_activity">;
     notes: import("drizzle-orm").Many<"project_notes">;
+}>;
+export declare const projectStatusesRelations: import("drizzle-orm").Relations<"project_statuses", {
+    projects: import("drizzle-orm").Many<"projects">;
 }>;
 export declare const projectMilestonesRelations: import("drizzle-orm").Relations<"project_milestones", {
     project: import("drizzle-orm").One<"projects", true>;

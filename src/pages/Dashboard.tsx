@@ -91,13 +91,13 @@ function DashboardContent() {
       },
     },
     {
-      key: 'status',
+      key: 'statusLabel',
       label: 'Status',
       sortable: true,
       filterType: 'select' as const,
       filterOptions: statusOptions,
       render: (_value: unknown, row: Record<string, unknown>) => (
-        <ProjectStatusBadge status={String((row as any)?.status || '')} />
+        <ProjectStatusBadge status={String((row as any)?.statusLabel || '')} />
       ),
     },
     {

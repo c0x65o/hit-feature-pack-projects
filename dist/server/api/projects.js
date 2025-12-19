@@ -40,21 +40,32 @@ async function logActivity(db, projectId, activityType, userId, description, met
         metadata: metadata || null,
     });
 }
-async function getDefaultProjectStatusLabel(db) {
+async function getDefaultProjectStatusId(db) {
     // Get the first active status, sorted by sortOrder
     const [row] = await db
-        .select({ label: projectStatuses.label })
+        .select({ id: projectStatuses.id })
         .from(projectStatuses)
         .where(eq(projectStatuses.isActive, true))
         .orderBy(asc(projectStatuses.sortOrder))
         .limit(1);
-    return row?.label || 'Active';
+    if (!row) {
+        throw new Error('No active project statuses found');
+    }
+    return row.id;
 }
-async function isValidProjectStatus(db, label) {
+async function getStatusIdByLabel(db, label) {
     const [row] = await db
-        .select({ label: projectStatuses.label, isActive: projectStatuses.isActive })
+        .select({ id: projectStatuses.id, isActive: projectStatuses.isActive })
         .from(projectStatuses)
         .where(eq(projectStatuses.label, label))
+        .limit(1);
+    return row?.isActive ? row.id : null;
+}
+async function isValidProjectStatusId(db, statusId) {
+    const [row] = await db
+        .select({ id: projectStatuses.id, isActive: projectStatuses.isActive })
+        .from(projectStatuses)
+        .where(eq(projectStatuses.id, statusId))
         .limit(1);
     return Boolean(row && row.isActive);
 }
@@ -85,10 +96,15 @@ export async function GET(request) {
         // Build where conditions
         const conditions = [];
         if (status) {
-            conditions.push(eq(projects.status, status));
+            // status param is a status ID (uuid)
+            conditions.push(eq(projects.statusId, status));
         }
         if (excludeArchived) {
-            conditions.push(sql `${projects.status} != 'Archived'`);
+            // Lookup the 'Archived' status ID to exclude it
+            const archivedStatusId = await getStatusIdByLabel(db, 'Archived');
+            if (archivedStatusId) {
+                conditions.push(sql `${projects.statusId} != ${archivedStatusId}`);
+            }
         }
         if (search) {
             conditions.push(or(like(projects.name, `%${search}%`), like(projects.description, `%${search}%`), like(projects.slug, `%${search}%`)));
@@ -97,7 +113,7 @@ export async function GET(request) {
         const sortColumns = {
             id: projects.id,
             name: projects.name,
-            status: projects.status,
+            statusId: projects.statusId,
             createdOnTimestamp: projects.createdOnTimestamp,
             lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
         };
@@ -109,7 +125,23 @@ export async function GET(request) {
         const countQuery = db.select({ count: sql `count(*)` }).from(projects);
         const countResult = whereClause ? await countQuery.where(whereClause) : await countQuery;
         const total = Number(countResult[0]?.count || 0);
-        const baseQuery = db.select().from(projects);
+        const baseQuery = db
+            .select({
+            id: projects.id,
+            name: projects.name,
+            slug: projects.slug,
+            description: projects.description,
+            statusId: projects.statusId,
+            statusLabel: projectStatuses.label,
+            statusColor: projectStatuses.color,
+            companyId: projects.companyId,
+            createdByUserId: projects.createdByUserId,
+            createdOnTimestamp: projects.createdOnTimestamp,
+            lastUpdatedByUserId: projects.lastUpdatedByUserId,
+            lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
+        })
+            .from(projects)
+            .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id));
         const items = whereClause
             ? await baseQuery.where(whereClause).orderBy(orderDirection).limit(pageSize).offset(offset)
             : await baseQuery.orderBy(orderDirection).limit(pageSize).offset(offset);
@@ -171,16 +203,25 @@ export async function POST(request) {
         if (existing.length > 0) {
             return NextResponse.json({ error: 'A project with this slug already exists' }, { status: 409 });
         }
-        if (body.status !== undefined && body.status !== null) {
-            const statusLabel = String(body.status).trim();
-            if (!statusLabel) {
-                return NextResponse.json({ error: 'Status cannot be empty' }, { status: 400 });
-            }
-            const ok = await isValidProjectStatus(db, statusLabel);
+        // Resolve statusId - accept either statusId (uuid) or status (label for backwards compat)
+        let resolvedStatusId;
+        if (body.statusId) {
+            const ok = await isValidProjectStatusId(db, body.statusId);
             if (!ok) {
-                return NextResponse.json({ error: `Invalid status: ${statusLabel}` }, { status: 400 });
+                return NextResponse.json({ error: `Invalid statusId: ${body.statusId}` }, { status: 400 });
             }
-            body.status = statusLabel;
+            resolvedStatusId = body.statusId;
+        }
+        else if (body.status) {
+            // Accept label for API backwards compatibility, resolve to ID
+            const statusId = await getStatusIdByLabel(db, body.status);
+            if (!statusId) {
+                return NextResponse.json({ error: `Invalid status: ${body.status}` }, { status: 400 });
+            }
+            resolvedStatusId = statusId;
+        }
+        else {
+            resolvedStatusId = await getDefaultProjectStatusId(db);
         }
         // Create project
         const [project] = await db
@@ -189,7 +230,7 @@ export async function POST(request) {
             name: body.name.trim(),
             slug,
             description: body.description || null,
-            status: body.status || (await getDefaultProjectStatusLabel(db)),
+            statusId: resolvedStatusId,
             companyId,
             createdByUserId: user.sub,
             lastUpdatedByUserId: user.sub,

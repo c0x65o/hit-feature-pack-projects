@@ -77,12 +77,12 @@ function DashboardContent() {
             },
         },
         {
-            key: 'status',
+            key: 'statusLabel',
             label: 'Status',
             sortable: true,
             filterType: 'select',
             filterOptions: statusOptions,
-            render: (_value, row) => (_jsx(ProjectStatusBadge, { status: String(row?.status || '') })),
+            render: (_value, row) => (_jsx(ProjectStatusBadge, { status: String(row?.statusLabel || '') })),
         },
         {
             key: 'lastUpdatedOnTimestamp',

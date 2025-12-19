@@ -27,7 +27,9 @@ export const projects = pgTable('projects', {
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }), // URL-friendly identifier
     description: text('description'),
-    status: varchar('status', { length: 50 }).default('Active').notNull(), // References project_statuses.label
+    statusId: uuid('status_id')
+        .references(() => projectStatuses.id)
+        .notNull(), // FK to project_statuses
     // CRM Company association (optional, controlled by feature flag)
     companyId: uuid('company_id'), // References crm_companies.id when CRM is enabled
     // Audit fields
@@ -37,7 +39,7 @@ export const projects = pgTable('projects', {
     lastUpdatedOnTimestamp: timestamp('last_updated_on_timestamp').defaultNow().notNull(),
 }, (table) => ({
     slugIdx: unique('projects_slug_unique').on(table.slug),
-    statusIdx: index('projects_status_idx').on(table.status),
+    statusIdx: index('projects_status_id_idx').on(table.statusId),
     createdByIdx: index('projects_created_by_idx').on(table.createdByUserId),
     companyIdx: index('projects_company_idx').on(table.companyId),
 }));
@@ -49,7 +51,7 @@ export const projects = pgTable('projects', {
  */
 export const projectStatuses = pgTable('project_statuses', {
     id: uuid('id').primaryKey().defaultRandom(),
-    label: varchar('label', { length: 50 }).notNull().unique(), // e.g. "Active" (used as identifier in projects.status)
+    label: varchar('label', { length: 50 }).notNull().unique(), // e.g. "Active" - display label (projects reference by id, not label)
     color: varchar('color', { length: 50 }), // e.g. "green" or "#22c55e"
     sortOrder: integer('sort_order').default(0).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
@@ -153,11 +155,18 @@ export const projectNotes = pgTable('project_notes', {
 // ─────────────────────────────────────────────────────────────────────────────
 // RELATIONS
 // ─────────────────────────────────────────────────────────────────────────────
-export const projectsRelations = relations(projects, ({ many }) => ({
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+    status: one(projectStatuses, {
+        fields: [projects.statusId],
+        references: [projectStatuses.id],
+    }),
     milestones: many(projectMilestones),
     links: many(projectLinks),
     activity: many(projectActivity),
     notes: many(projectNotes),
+}));
+export const projectStatusesRelations = relations(projectStatuses, ({ many }) => ({
+    projects: many(projects),
 }));
 export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
     project: one(projects, {

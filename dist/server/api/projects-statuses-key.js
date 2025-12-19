@@ -63,9 +63,10 @@ export async function PUT(request) {
         const label = body.label !== undefined ? normalizeLabel(body.label) : existing.label;
         if (!label)
             return NextResponse.json({ error: 'Label is required and must be 50 characters or less' }, { status: 400 });
-        // If label changes, check for conflicts and update projects.status
+        // If label changes, check for conflicts
+        // NOTE: With FK design (projects.status_id → project_statuses.id),
+        // we don't need to update projects when label changes - that's the whole point!
         if (label !== existing.label) {
-            // Check if new label already exists
             const [conflict] = await db
                 .select()
                 .from(projectStatuses)
@@ -74,11 +75,6 @@ export async function PUT(request) {
             if (conflict) {
                 return NextResponse.json({ error: 'A status with this label already exists' }, { status: 409 });
             }
-            // Update all projects using the old label to use the new label
-            await db
-                .update(projects)
-                .set({ status: label })
-                .where(eq(projects.status, existing.label));
         }
         const color = body.color !== undefined ? (typeof body.color === 'string' ? body.color.trim() : null) : existing.color;
         const sortOrder = body.sortOrder !== undefined && Number.isFinite(Number(body.sortOrder)) ? Number(body.sortOrder) : existing.sortOrder;
@@ -113,10 +109,11 @@ export async function DELETE(request) {
         const [existing] = await db.select().from(projectStatuses).where(eq(projectStatuses.id, id)).limit(1);
         if (!existing)
             return NextResponse.json({ error: 'Status not found' }, { status: 404 });
+        // Check if any projects use this status by ID (proper FK check)
         const [row] = await db
             .select({ count: sql `count(*)` })
             .from(projects)
-            .where(eq(projects.status, existing.label));
+            .where(eq(projects.statusId, existing.id));
         if (Number(row?.count ?? 0) > 0) {
             return NextResponse.json({ error: 'Cannot delete a status that is in use by projects' }, { status: 400 });
         }

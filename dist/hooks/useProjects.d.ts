@@ -23,7 +23,7 @@ export declare function useProjects(options?: UseProjectsOptions): {
         name: string;
         slug: string | null;
         description: string | null;
-        status: string;
+        statusId: string;
         companyId: string | null;
         createdByUserId: string;
         createdOnTimestamp: Date;
@@ -48,7 +48,7 @@ export declare function useProject(id: string | undefined): {
         name: string;
         slug: string | null;
         description: string | null;
-        status: string;
+        statusId: string;
         companyId: string | null;
         createdByUserId: string;
         createdOnTimestamp: Date;
@@ -64,7 +64,6 @@ export declare function useProjectMilestones(projectId: string | undefined): {
         id: string;
         name: string;
         description: string | null;
-        status: string;
         createdByUserId: string;
         createdOnTimestamp: Date;
         lastUpdatedByUserId: string | null;
@@ -72,6 +71,7 @@ export declare function useProjectMilestones(projectId: string | undefined): {
         projectId: string;
         targetDate: Date | null;
         completedDate: Date | null;
+        status: string;
     }[];
     loading: boolean;
     error: Error | null;
@@ -117,6 +117,52 @@ export declare function useProjectActivity(projectId: string | undefined, filter
         activityType: string;
         userId: string;
     }[];
+    loading: boolean;
+    error: Error | null;
+    refresh: () => Promise<void>;
+};
+export interface ProjectFormInfo {
+    formId: string;
+    formName: string;
+    formSlug: string;
+    entityFieldKey: string;
+    count: number;
+}
+export declare function useProjectForms(projectId: string | undefined): {
+    forms: ProjectFormInfo[];
+    loading: boolean;
+    error: Error | null;
+    refresh: () => Promise<void>;
+};
+export interface FormEntryRecord {
+    id: string;
+    formId: string;
+    createdByUserId: string;
+    updatedByUserId: string | null;
+    data: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
+}
+export interface PaginatedFormEntriesResponse {
+    items: FormEntryRecord[];
+    fields: any[];
+    listConfig: any;
+    pagination: {
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+    };
+}
+export declare function useProjectFormEntries(projectId: string | undefined, formId: string | undefined, options?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    entityFieldKey?: string;
+}): {
+    data: PaginatedFormEntriesResponse | null;
     loading: boolean;
     error: Error | null;
     refresh: () => Promise<void>;

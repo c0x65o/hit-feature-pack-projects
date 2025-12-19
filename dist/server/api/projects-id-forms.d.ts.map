@@ -1,0 +1,1 @@
+{"version":3,"file":"projects-id-forms.d.ts","sourceRoot":"","sources":["../../../src/server/api/projects-id-forms.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAOxD,eAAO,MAAM,OAAO,kBAAkB,CAAC;AACvC,eAAO,MAAM,OAAO,WAAW,CAAC;AAahC;;;GAGG;AACH,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW;;;;gBAgChC,MAAM;kBACJ,MAAM;kBACN,MAAM;yBACC,MAAM;eAChB,MAAM;;IA0ElB"}

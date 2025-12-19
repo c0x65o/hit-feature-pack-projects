@@ -21,7 +21,7 @@ export function EditProject(props) {
             setName(project.name);
             setSlug(project.slug || '');
             setDescription(project.description || '');
-            setStatus(String(project.status || 'Active'));
+            setStatus(String(project.statusLabel || 'Active'));
         }
     }, [project]);
     const handleSubmit = async (e) => {
@@ -39,7 +39,7 @@ export function EditProject(props) {
                 name: name.trim(),
                 slug: slug.trim() || null,
                 description: description.trim() || null,
-                status,
+                status, // API accepts status (label) for backwards compat
             });
             window.location.href = `/projects/${projectId}`;
         }
