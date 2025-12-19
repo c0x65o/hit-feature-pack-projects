@@ -26,11 +26,11 @@ export {
   InsertProjectLink,
   InsertProjectActivity,
   InsertProjectNote,
-  DEFAULT_PROJECT_STATUS_KEYS,
+  DEFAULT_PROJECT_STATUS_LABELS,
   MILESTONE_STATUSES,
   ACTIVITY_TYPES,
   type ProjectStatus,
-  type DefaultProjectStatusKey,
+  type DefaultProjectStatusLabel,
   type MilestoneStatus,
   type ActivityType,
 } from '../schema/projects';

@@ -7,28 +7,6 @@ import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { ProjectStatusesProvider } from '../hooks/ProjectStatusesContext';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { Plus } from 'lucide-react';
-function isAdminUser() {
-    if (typeof window === 'undefined')
-        return false;
-    const token = localStorage.getItem('hit_token') || '';
-    if (!token)
-        return false;
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3)
-            return false;
-        const payload = JSON.parse(atob(parts[1]));
-        const roles = Array.isArray(payload.roles)
-            ? payload.roles.map((r) => String(r))
-            : payload.role
-                ? [String(payload.role)]
-                : [];
-        return roles.includes('admin');
-    }
-    catch {
-        return false;
-    }
-}
 function DashboardContent() {
     const { Page, Card, Button, DataTable } = useUi();
     const [page, setPage] = useState(1);
@@ -43,10 +21,11 @@ function DashboardContent() {
     });
     // Handle view filter changes from DataTable
     const handleViewFiltersChange = useCallback((filters) => {
-        // Check for status filter
+        // Check for status filter (case-insensitive comparison)
         const statusFilter = filters.find((f) => f.field === 'status');
         if (statusFilter) {
-            if (statusFilter.operator === 'notEquals' && statusFilter.value === 'archived') {
+            const filterValue = String(statusFilter.value || '').toLowerCase();
+            if (statusFilter.operator === 'notEquals' && filterValue === 'archived') {
                 setExcludeArchived(true);
             }
             else {
@@ -65,14 +44,9 @@ function DashboardContent() {
         sortBy: sortConfig.sortBy,
         sortOrder: sortConfig.sortOrder,
     });
-    // Build status options from loaded statuses (plus archived which is always available)
+    // Build status options from loaded statuses
     const statusOptions = useMemo(() => {
-        const opts = activeStatuses.map((s) => ({ value: s.key, label: s.label }));
-        // Add archived if not already present
-        if (!opts.find((o) => o.value === 'archived')) {
-            opts.push({ value: 'archived', label: 'Archived' });
-        }
-        return opts;
+        return activeStatuses.map((s) => ({ value: s.label, label: s.label }));
     }, [activeStatuses]);
     const handleRowClick = (row) => {
         const id = String(row?.id || '');
@@ -82,9 +56,6 @@ function DashboardContent() {
     };
     const handleCreate = () => {
         window.location.href = '/projects/new';
-    };
-    const handleSetup = () => {
-        window.location.href = '/projects/setup/statuses';
     };
     const columns = useMemo(() => [
         {
@@ -127,7 +98,7 @@ function DashboardContent() {
     ], [statusOptions, handleRowClick]);
     const projects = data?.data || [];
     const pagination = data?.pagination;
-    return (_jsx(Page, { title: "Projects", actions: _jsxs("div", { style: { display: 'flex', gap: '8px' }, children: [isAdminUser() ? (_jsx(Button, { variant: "secondary", onClick: handleSetup, children: "Setup" })) : null, _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] })] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track milestones, linked systems, and activity.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: handleViewFiltersChange })) }) }));
+    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track milestones, linked systems, and activity.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: handleViewFiltersChange })) }) }));
 }
 /**
  * Dashboard wrapped with ProjectStatusesProvider to share statuses data

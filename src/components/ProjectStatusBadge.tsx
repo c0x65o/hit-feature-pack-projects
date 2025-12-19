@@ -12,25 +12,23 @@ interface ProjectStatusBadgeProps {
 }
 
 const FALLBACK_COLORS: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'var(--hit-success, #22c55e)', text: '#ffffff' },
-  archived: { bg: 'var(--hit-muted, #64748b)', text: '#ffffff' },
-  completed: { bg: 'var(--hit-primary, #3b82f6)', text: '#ffffff' },
-  cancelled: { bg: 'var(--hit-error, #ef4444)', text: '#ffffff' },
-  draft: { bg: '#64748b', text: '#ffffff' },
+  Active: { bg: 'var(--hit-success, #22c55e)', text: '#ffffff' },
+  Archived: { bg: 'var(--hit-muted, #64748b)', text: '#ffffff' },
+  Completed: { bg: 'var(--hit-primary, #3b82f6)', text: '#ffffff' },
+  Cancelled: { bg: 'var(--hit-error, #ef4444)', text: '#ffffff' },
+  Draft: { bg: '#64748b', text: '#ffffff' },
 };
 
-function fallbackLabel(key: string): string {
-  if (!key) return 'Unknown';
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+function fallbackLabel(label: string): string {
+  if (!label) return 'Unknown';
+  return label;
 }
 
 export function ProjectStatusBadge({ status, onChange, canChange = false }: ProjectStatusBadgeProps) {
   const { Badge, Select } = useUi();
   const { activeStatuses } = useProjectStatuses();
 
-  const record = activeStatuses.find((s) => s.key === status);
+  const record = activeStatuses.find((s) => s.label === status);
   const label = record?.label || fallbackLabel(String(status));
   const colors = record?.color
     ? { bg: record.color, text: '#ffffff' }
@@ -41,7 +39,7 @@ export function ProjectStatusBadge({ status, onChange, canChange = false }: Proj
       <Select
         value={String(status)}
         onChange={(value) => onChange(String(value))}
-        options={activeStatuses.map((s) => ({ value: s.key, label: s.label }))}
+        options={activeStatuses.map((s) => ({ value: s.label, label: s.label }))}
       />
     );
   }

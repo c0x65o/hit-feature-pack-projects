@@ -14,7 +14,7 @@ export function EditProject(props: { id?: string }) {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<string>('active');
+  const [status, setStatus] = useState<string>('Active');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export function EditProject(props: { id?: string }) {
       setName(project.name);
       setSlug(project.slug || '');
       setDescription(project.description || '');
-      setStatus(String(project.status || 'active'));
+            setStatus(String(project.status || 'Active'));
     }
   }, [project]);
 
@@ -152,7 +152,7 @@ export function EditProject(props: { id?: string }) {
             label="Status"
             value={status}
             onChange={(value) => setStatus(String(value))}
-            options={activeStatuses.map((s) => ({ value: s.key, label: s.label }))}
+            options={activeStatuses.map((s) => ({ value: s.label, label: s.label }))}
             disabled={loading || statusesLoading}
           />
 

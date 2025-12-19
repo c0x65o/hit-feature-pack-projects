@@ -66,20 +66,22 @@ async function logActivity(
   });
 }
 
-async function getDefaultProjectStatusKey(db: ReturnType<typeof getDb>): Promise<string> {
+async function getDefaultProjectStatusLabel(db: ReturnType<typeof getDb>): Promise<string> {
+  // Get the first active status, sorted by sortOrder
   const [row] = await db
-    .select({ key: projectStatuses.key })
+    .select({ label: projectStatuses.label })
     .from(projectStatuses)
-    .where(eq(projectStatuses.isDefault, true))
+    .where(eq(projectStatuses.isActive, true))
+    .orderBy(asc(projectStatuses.sortOrder))
     .limit(1);
-  return row?.key || 'active';
+  return row?.label || 'Active';
 }
 
-async function isValidProjectStatus(db: ReturnType<typeof getDb>, key: string): Promise<boolean> {
+async function isValidProjectStatus(db: ReturnType<typeof getDb>, label: string): Promise<boolean> {
   const [row] = await db
-    .select({ key: projectStatuses.key, isActive: projectStatuses.isActive })
+    .select({ label: projectStatuses.label, isActive: projectStatuses.isActive })
     .from(projectStatuses)
-    .where(eq(projectStatuses.key, key))
+    .where(eq(projectStatuses.label, label))
     .limit(1);
   return Boolean(row && row.isActive);
 }
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(projects.status, status));
     }
     if (excludeArchived) {
-      conditions.push(sql`${projects.status} != 'archived'`);
+      conditions.push(sql`${projects.status} != 'Archived'`);
     }
     if (search) {
       conditions.push(
@@ -226,15 +228,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.status !== undefined && body.status !== null) {
-      const statusKey = String(body.status).trim();
-      if (!statusKey) {
+      const statusLabel = String(body.status).trim();
+      if (!statusLabel) {
         return NextResponse.json({ error: 'Status cannot be empty' }, { status: 400 });
       }
-      const ok = await isValidProjectStatus(db, statusKey);
+      const ok = await isValidProjectStatus(db, statusLabel);
       if (!ok) {
-        return NextResponse.json({ error: `Invalid status: ${statusKey}` }, { status: 400 });
+        return NextResponse.json({ error: `Invalid status: ${statusLabel}` }, { status: 400 });
       }
-      body.status = statusKey;
+      body.status = statusLabel;
     }
 
     // Create project
@@ -244,7 +246,7 @@ export async function POST(request: NextRequest) {
         name: body.name.trim(),
         slug,
         description: body.description || null,
-        status: body.status || (await getDefaultProjectStatusKey(db)),
+        status: body.status || (await getDefaultProjectStatusLabel(db)),
         companyId,
         createdByUserId: user.sub,
         lastUpdatedByUserId: user.sub,

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "projects" (
   "name" VARCHAR(255) NOT NULL,
   "slug" VARCHAR(255),
   "description" TEXT,
-  "status" VARCHAR(50) DEFAULT 'active' NOT NULL,
+  "status" VARCHAR(50) DEFAULT 'Active' NOT NULL,
   "created_by_user_id" VARCHAR(255) NOT NULL,
   "created_on_timestamp" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   "last_updated_by_user_id" VARCHAR(255),
@@ -22,29 +22,28 @@ CREATE INDEX IF NOT EXISTS "projects_created_by_idx" ON "projects" ("created_by_
 
 -- Project statuses table (setup-controlled)
 CREATE TABLE IF NOT EXISTS "project_statuses" (
-  "key" VARCHAR(50) PRIMARY KEY,
-  "label" VARCHAR(100) NOT NULL,
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "label" VARCHAR(50) NOT NULL UNIQUE,
   "color" VARCHAR(50),
   "sort_order" INTEGER DEFAULT 0 NOT NULL,
-  "is_default" BOOLEAN DEFAULT FALSE NOT NULL,
   "is_active" BOOLEAN DEFAULT TRUE NOT NULL,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS "project_statuses_label_unique" ON "project_statuses" ("label");
 CREATE INDEX IF NOT EXISTS "project_statuses_sort_idx" ON "project_statuses" ("sort_order");
 CREATE INDEX IF NOT EXISTS "project_statuses_active_idx" ON "project_statuses" ("is_active");
-CREATE INDEX IF NOT EXISTS "project_statuses_default_idx" ON "project_statuses" ("is_default");
 
 -- Seed default statuses (safe to re-run)
-INSERT INTO "project_statuses" ("key", "label", "color", "sort_order", "is_default", "is_active")
+INSERT INTO "project_statuses" ("label", "color", "sort_order", "is_active")
 VALUES
-  ('draft', 'Draft', '#64748b', 10, FALSE, TRUE),
-  ('active', 'Active', '#22c55e', 20, TRUE, TRUE),
-  ('completed', 'Completed', '#3b82f6', 30, FALSE, TRUE),
-  ('cancelled', 'Cancelled', '#ef4444', 40, FALSE, TRUE),
-  ('archived', 'Archived', '#94a3b8', 50, FALSE, TRUE)
-ON CONFLICT ("key") DO NOTHING;
+  ('Draft', '#64748b', 10, TRUE),
+  ('Active', '#22c55e', 20, TRUE),
+  ('Completed', '#3b82f6', 30, TRUE),
+  ('Cancelled', '#ef4444', 40, TRUE),
+  ('Archived', '#94a3b8', 50, TRUE)
+ON CONFLICT ("label") DO NOTHING;
 
 -- Remove legacy per-user membership table
 DROP TABLE IF EXISTS "project_members";

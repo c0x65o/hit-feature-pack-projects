@@ -51,10 +51,9 @@ export function useProjectStatuses() {
   }
 
   // Otherwise return local state
-  const defaultStatusKey = statuses.find((s) => s.isDefault)?.key || 'active';
   const activeStatuses = statuses.filter((s) => s.isActive);
 
-  return { statuses, activeStatuses, defaultStatusKey, loading, error, refresh };
+  return { statuses, activeStatuses, loading, error, refresh };
 }
 
 

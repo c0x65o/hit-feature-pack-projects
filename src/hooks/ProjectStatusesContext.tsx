@@ -6,7 +6,6 @@ import type { ProjectStatusRecord } from '../schema/projects';
 export interface ProjectStatusesContextValue {
   statuses: ProjectStatusRecord[];
   activeStatuses: ProjectStatusRecord[];
-  defaultStatusKey: string;
   loading: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
@@ -41,12 +40,11 @@ export function ProjectStatusesProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const defaultStatusKey = statuses.find((s) => s.isDefault)?.key || 'active';
   const activeStatuses = statuses.filter((s) => s.isActive);
 
   return (
     <ProjectStatusesContext.Provider
-      value={{ statuses, activeStatuses, defaultStatusKey, loading, error, refresh }}
+      value={{ statuses, activeStatuses, loading, error, refresh }}
     >
       {children}
     </ProjectStatusesContext.Provider>

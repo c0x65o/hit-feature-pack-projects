@@ -8,19 +8,21 @@ import { useProjectStatuses } from '../hooks/useProjectStatuses';
 export function CreateProject() {
   const { Page, Card, Button, Input, TextArea, Select } = useUi();
   const { createProject } = useProjects();
-  const { activeStatuses, defaultStatusKey, loading: statusesLoading } = useProjectStatuses();
+  const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<string>('active');
+  const [status, setStatus] = useState<string>('Active');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (defaultStatusKey) {
-      setStatus((s) => (s ? s : defaultStatusKey));
+    if (activeStatuses.length > 0 && !status) {
+      // Set to first active status sorted by sortOrder
+      const sorted = [...activeStatuses].sort((a, b) => a.sortOrder - b.sortOrder);
+      setStatus(sorted[0].label);
     }
-  }, [defaultStatusKey]);
+  }, [activeStatuses, status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +111,7 @@ export function CreateProject() {
             label="Status"
             value={status}
             onChange={(value) => setStatus(String(value))}
-            options={activeStatuses.map((s) => ({ value: s.key, label: s.label }))}
+            options={activeStatuses.map((s) => ({ value: s.label, label: s.label }))}
             disabled={loading || statusesLoading}
           />
 

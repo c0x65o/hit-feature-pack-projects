@@ -42,7 +42,7 @@ export const projects = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }), // URL-friendly identifier
     description: text('description'),
-    status: varchar('status', { length: 50 }).default('active').notNull(), // active, archived, completed, cancelled
+    status: varchar('status', { length: 50 }).default('Active').notNull(), // References project_statuses.label
     // CRM Company association (optional, controlled by feature flag)
     companyId: uuid('company_id'), // References crm_companies.id when CRM is enabled
     // Audit fields
@@ -68,19 +68,18 @@ export const projects = pgTable(
 export const projectStatuses = pgTable(
   'project_statuses',
   {
-    key: varchar('key', { length: 50 }).primaryKey(), // e.g. draft, active, archived
-    label: varchar('label', { length: 100 }).notNull(), // e.g. "Active"
+    id: uuid('id').primaryKey().defaultRandom(),
+    label: varchar('label', { length: 50 }).notNull().unique(), // e.g. "Active" (used as identifier in projects.status)
     color: varchar('color', { length: 50 }), // e.g. "green" or "#22c55e"
     sortOrder: integer('sort_order').default(0).notNull(),
-    isDefault: boolean('is_default').default(false).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
+    labelIdx: unique('project_statuses_label_unique').on(table.label),
     sortIdx: index('project_statuses_sort_idx').on(table.sortOrder),
     activeIdx: index('project_statuses_active_idx').on(table.isActive),
-    defaultIdx: index('project_statuses_default_idx').on(table.isDefault),
   })
 );
 
@@ -270,8 +269,8 @@ export type ProjectStatus = string;
 /**
  * Defaults inserted by migrations (safe baseline).
  */
-export const DEFAULT_PROJECT_STATUS_KEYS = ['draft', 'active', 'completed', 'cancelled', 'archived'] as const;
-export type DefaultProjectStatusKey = (typeof DEFAULT_PROJECT_STATUS_KEYS)[number];
+export const DEFAULT_PROJECT_STATUS_LABELS = ['Draft', 'Active', 'Completed', 'Cancelled', 'Archived'] as const;
+export type DefaultProjectStatusLabel = (typeof DEFAULT_PROJECT_STATUS_LABELS)[number];
 
 export const MILESTONE_STATUSES = ['planned', 'in_progress', 'completed', 'cancelled'] as const;
 export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];

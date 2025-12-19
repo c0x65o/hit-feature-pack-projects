@@ -7,18 +7,20 @@ import { useProjectStatuses } from '../hooks/useProjectStatuses';
 export function CreateProject() {
     const { Page, Card, Button, Input, TextArea, Select } = useUi();
     const { createProject } = useProjects();
-    const { activeStatuses, defaultStatusKey, loading: statusesLoading } = useProjectStatuses();
+    const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
-    const [status, setStatus] = useState('active');
+    const [status, setStatus] = useState('Active');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     useEffect(() => {
-        if (defaultStatusKey) {
-            setStatus((s) => (s ? s : defaultStatusKey));
+        if (activeStatuses.length > 0 && !status) {
+            // Set to first active status sorted by sortOrder
+            const sorted = [...activeStatuses].sort((a, b) => a.sortOrder - b.sortOrder);
+            setStatus(sorted[0].label);
         }
-    }, [defaultStatusKey]);
+    }, [activeStatuses, status]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -60,6 +62,6 @@ export function CreateProject() {
                             borderRadius: '8px',
                             color: 'var(--hit-error, #ef4444)',
                             fontSize: '14px',
-                        }, children: error })), _jsx(Input, { label: "Project Name", value: name, onChange: setName, placeholder: "Enter project name", required: true, disabled: loading }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "Optional - will be generated from name if omitted", disabled: loading }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: loading }), _jsx(Select, { label: "Status", value: status, onChange: (value) => setStatus(String(value)), options: activeStatuses.map((s) => ({ value: s.key, label: s.label })), disabled: loading || statusesLoading }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !name.trim(), children: "Create Project" })] })] }) }) }));
+                        }, children: error })), _jsx(Input, { label: "Project Name", value: name, onChange: setName, placeholder: "Enter project name", required: true, disabled: loading }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "Optional - will be generated from name if omitted", disabled: loading }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: loading }), _jsx(Select, { label: "Status", value: status, onChange: (value) => setStatus(String(value)), options: activeStatuses.map((s) => ({ value: s.label, label: s.label })), disabled: loading || statusesLoading }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !name.trim(), children: "Create Project" })] })] }) }) }));
 }
 export default CreateProject;

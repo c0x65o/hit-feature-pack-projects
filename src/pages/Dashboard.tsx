@@ -8,25 +8,6 @@ import { ProjectStatusesProvider } from '../hooks/ProjectStatusesContext';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { Plus } from 'lucide-react';
 
-function isAdminUser(): boolean {
-  if (typeof window === 'undefined') return false;
-  const token = localStorage.getItem('hit_token') || '';
-  if (!token) return false;
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    const payload = JSON.parse(atob(parts[1]));
-    const roles: string[] = Array.isArray(payload.roles)
-      ? payload.roles.map((r: any) => String(r))
-      : payload.role
-        ? [String(payload.role)]
-        : [];
-    return roles.includes('admin');
-  } catch {
-    return false;
-  }
-}
-
 function DashboardContent() {
   const { Page, Card, Button, DataTable } = useUi();
   const [page, setPage] = useState(1);
@@ -44,10 +25,11 @@ function DashboardContent() {
 
   // Handle view filter changes from DataTable
   const handleViewFiltersChange = useCallback((filters: Array<{ field: string; operator: string; value: any }>) => {
-    // Check for status filter
+    // Check for status filter (case-insensitive comparison)
     const statusFilter = filters.find((f) => f.field === 'status');
     if (statusFilter) {
-      if (statusFilter.operator === 'notEquals' && statusFilter.value === 'archived') {
+      const filterValue = String(statusFilter.value || '').toLowerCase();
+      if (statusFilter.operator === 'notEquals' && filterValue === 'archived') {
         setExcludeArchived(true);
       } else {
         setExcludeArchived(false);
@@ -66,14 +48,9 @@ function DashboardContent() {
     sortOrder: sortConfig.sortOrder,
   });
   
-  // Build status options from loaded statuses (plus archived which is always available)
+  // Build status options from loaded statuses
   const statusOptions = useMemo(() => {
-    const opts = activeStatuses.map((s) => ({ value: s.key, label: s.label }));
-    // Add archived if not already present
-    if (!opts.find((o) => o.value === 'archived')) {
-      opts.push({ value: 'archived', label: 'Archived' });
-    }
-    return opts;
+    return activeStatuses.map((s) => ({ value: s.label, label: s.label }));
   }, [activeStatuses]);
 
   const handleRowClick = (row: Record<string, unknown>) => {
@@ -84,10 +61,6 @@ function DashboardContent() {
 
   const handleCreate = () => {
     window.location.href = '/projects/new';
-  };
-
-  const handleSetup = () => {
-    window.location.href = '/projects/setup/statuses';
   };
 
   const columns = useMemo(() => [
@@ -147,17 +120,10 @@ function DashboardContent() {
     <Page
       title="Projects"
       actions={
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {isAdminUser() ? (
-            <Button variant="secondary" onClick={handleSetup}>
-              Setup
-            </Button>
-          ) : null}
-          <Button variant="primary" onClick={handleCreate}>
-            <Plus size={16} style={{ marginRight: '8px' }} />
-            Create Project
-          </Button>
-        </div>
+        <Button variant="primary" onClick={handleCreate}>
+          <Plus size={16} style={{ marginRight: '8px' }} />
+          Create Project
+        </Button>
       }
     >
       <Card>

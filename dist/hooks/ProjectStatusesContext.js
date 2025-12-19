@@ -28,9 +28,8 @@ export function ProjectStatusesProvider({ children }) {
     useEffect(() => {
         refresh();
     }, [refresh]);
-    const defaultStatusKey = statuses.find((s) => s.isDefault)?.key || 'active';
     const activeStatuses = statuses.filter((s) => s.isActive);
-    return (_jsx(ProjectStatusesContext.Provider, { value: { statuses, activeStatuses, defaultStatusKey, loading, error, refresh }, children: children }));
+    return (_jsx(ProjectStatusesContext.Provider, { value: { statuses, activeStatuses, loading, error, refresh }, children: children }));
 }
 export function useProjectStatusesContext() {
     return useContext(ProjectStatusesContext);

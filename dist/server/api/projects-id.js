@@ -38,11 +38,11 @@ async function logActivity(db, projectId, activityType, userId, description, met
         metadata: metadata || null,
     });
 }
-async function isValidProjectStatus(db, key) {
+async function isValidProjectStatus(db, label) {
     const [row] = await db
-        .select({ key: projectStatuses.key, isActive: projectStatuses.isActive })
+        .select({ label: projectStatuses.label, isActive: projectStatuses.isActive })
         .from(projectStatuses)
-        .where(eq(projectStatuses.key, key))
+        .where(eq(projectStatuses.label, label))
         .limit(1);
     return Boolean(row && row.isActive);
 }
@@ -124,15 +124,15 @@ export async function PUT(request) {
             updates.description = body.description || null;
         }
         if (body.status !== undefined) {
-            const statusKey = String(body.status).trim();
-            if (!statusKey) {
+            const statusLabel = String(body.status).trim();
+            if (!statusLabel) {
                 return NextResponse.json({ error: 'Status cannot be empty' }, { status: 400 });
             }
-            const ok = await isValidProjectStatus(db, statusKey);
+            const ok = await isValidProjectStatus(db, statusLabel);
             if (!ok) {
-                return NextResponse.json({ error: `Invalid status: ${statusKey}` }, { status: 400 });
+                return NextResponse.json({ error: `Invalid status: ${statusLabel}` }, { status: 400 });
             }
-            updates.status = statusKey;
+            updates.status = statusLabel;
         }
         if (body.slug !== undefined) {
             updates.slug = body.slug || null;

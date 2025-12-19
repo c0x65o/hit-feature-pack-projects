@@ -9,12 +9,12 @@ import { isAdmin } from '../lib/access';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-function normalizeStatusKey(value: unknown): string | null {
+function normalizeLabel(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const key = value.trim().toLowerCase();
-  if (!key) return null;
-  if (!/^[a-z][a-z0-9_]*$/.test(key)) return null;
-  return key;
+  const label = value.trim();
+  if (!label) return null;
+  if (label.length > 50) return null;
+  return label;
 }
 
 /**
@@ -53,34 +53,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const db = getDb();
 
-    const key = normalizeStatusKey(body.key);
-    if (!key) {
-      return NextResponse.json({ error: 'Invalid key. Use lowercase letters/numbers/underscores.' }, { status: 400 });
+    const label = normalizeLabel(body.label);
+    if (!label) {
+      return NextResponse.json({ error: 'Label is required and must be 50 characters or less' }, { status: 400 });
     }
 
-    const label = typeof body.label === 'string' ? body.label.trim() : '';
-    if (!label) {
-      return NextResponse.json({ error: 'Label is required' }, { status: 400 });
+    // Check if label already exists
+    const [existing] = await db
+      .select()
+      .from(projectStatuses)
+      .where(eq(projectStatuses.label, label))
+      .limit(1);
+    
+    if (existing) {
+      return NextResponse.json({ error: 'A status with this label already exists' }, { status: 409 });
     }
 
     const color = typeof body.color === 'string' ? body.color.trim() : null;
     const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Number(body.sortOrder) : 0;
-    const isDefault = Boolean(body.isDefault);
     const isActive = body.isActive === undefined ? true : Boolean(body.isActive);
-
-    // If setting a new default, clear existing defaults
-    if (isDefault) {
-      await db.update(projectStatuses).set({ isDefault: false, updatedAt: new Date() }).where(eq(projectStatuses.isDefault, true));
-    }
 
     const [row] = await db
       .insert(projectStatuses)
       .values({
-        key,
         label,
         color,
         sortOrder,
-        isDefault,
         isActive,
         createdAt: new Date(),
         updatedAt: new Date(),

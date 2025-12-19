@@ -40,19 +40,21 @@ async function logActivity(db, projectId, activityType, userId, description, met
         metadata: metadata || null,
     });
 }
-async function getDefaultProjectStatusKey(db) {
+async function getDefaultProjectStatusLabel(db) {
+    // Get the first active status, sorted by sortOrder
     const [row] = await db
-        .select({ key: projectStatuses.key })
+        .select({ label: projectStatuses.label })
         .from(projectStatuses)
-        .where(eq(projectStatuses.isDefault, true))
+        .where(eq(projectStatuses.isActive, true))
+        .orderBy(asc(projectStatuses.sortOrder))
         .limit(1);
-    return row?.key || 'active';
+    return row?.label || 'Active';
 }
-async function isValidProjectStatus(db, key) {
+async function isValidProjectStatus(db, label) {
     const [row] = await db
-        .select({ key: projectStatuses.key, isActive: projectStatuses.isActive })
+        .select({ label: projectStatuses.label, isActive: projectStatuses.isActive })
         .from(projectStatuses)
-        .where(eq(projectStatuses.key, key))
+        .where(eq(projectStatuses.label, label))
         .limit(1);
     return Boolean(row && row.isActive);
 }
@@ -86,7 +88,7 @@ export async function GET(request) {
             conditions.push(eq(projects.status, status));
         }
         if (excludeArchived) {
-            conditions.push(sql `${projects.status} != 'archived'`);
+            conditions.push(sql `${projects.status} != 'Archived'`);
         }
         if (search) {
             conditions.push(or(like(projects.name, `%${search}%`), like(projects.description, `%${search}%`), like(projects.slug, `%${search}%`)));
@@ -170,15 +172,15 @@ export async function POST(request) {
             return NextResponse.json({ error: 'A project with this slug already exists' }, { status: 409 });
         }
         if (body.status !== undefined && body.status !== null) {
-            const statusKey = String(body.status).trim();
-            if (!statusKey) {
+            const statusLabel = String(body.status).trim();
+            if (!statusLabel) {
                 return NextResponse.json({ error: 'Status cannot be empty' }, { status: 400 });
             }
-            const ok = await isValidProjectStatus(db, statusKey);
+            const ok = await isValidProjectStatus(db, statusLabel);
             if (!ok) {
-                return NextResponse.json({ error: `Invalid status: ${statusKey}` }, { status: 400 });
+                return NextResponse.json({ error: `Invalid status: ${statusLabel}` }, { status: 400 });
             }
-            body.status = statusKey;
+            body.status = statusLabel;
         }
         // Create project
         const [project] = await db
@@ -187,7 +189,7 @@ export async function POST(request) {
             name: body.name.trim(),
             slug,
             description: body.description || null,
-            status: body.status || (await getDefaultProjectStatusKey(db)),
+            status: body.status || (await getDefaultProjectStatusLabel(db)),
             companyId,
             createdByUserId: user.sub,
             lastUpdatedByUserId: user.sub,

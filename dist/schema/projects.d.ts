@@ -158,16 +158,16 @@ export declare const projectStatuses: import("drizzle-orm/pg-core").PgTableWithC
     name: "project_statuses";
     schema: undefined;
     columns: {
-        key: import("drizzle-orm/pg-core").PgColumn<{
-            name: "key";
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
             tableName: "project_statuses";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgUUID";
             data: string;
             driverParam: string;
             notNull: true;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
+            hasDefault: true;
+            enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
         label: import("drizzle-orm/pg-core").PgColumn<{
@@ -201,18 +201,6 @@ export declare const projectStatuses: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgInteger";
             data: number;
             driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        isDefault: import("drizzle-orm/pg-core").PgColumn<{
-            name: "is_default";
-            tableName: "project_statuses";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
             notNull: true;
             hasDefault: true;
             enumValues: undefined;
@@ -752,8 +740,8 @@ export type ProjectStatus = string;
 /**
  * Defaults inserted by migrations (safe baseline).
  */
-export declare const DEFAULT_PROJECT_STATUS_KEYS: readonly ["draft", "active", "completed", "cancelled", "archived"];
-export type DefaultProjectStatusKey = (typeof DEFAULT_PROJECT_STATUS_KEYS)[number];
+export declare const DEFAULT_PROJECT_STATUS_LABELS: readonly ["Draft", "Active", "Completed", "Cancelled", "Archived"];
+export type DefaultProjectStatusLabel = (typeof DEFAULT_PROJECT_STATUS_LABELS)[number];
 export declare const MILESTONE_STATUSES: readonly ["planned", "in_progress", "completed", "cancelled"];
 export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
 export declare const ACTIVITY_TYPES: readonly ["project.created", "project.updated", "project.status_changed", "project.link_added", "project.link_removed", "project.link_updated", "project.milestone_created", "project.milestone_updated", "project.milestone_completed", "project.milestone_deleted"];

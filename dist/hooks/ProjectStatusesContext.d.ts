@@ -3,7 +3,6 @@ import type { ProjectStatusRecord } from '../schema/projects';
 export interface ProjectStatusesContextValue {
     statuses: ProjectStatusRecord[];
     activeStatuses: ProjectStatusRecord[];
-    defaultStatusKey: string;
     loading: boolean;
     error: Error | null;
     refresh: () => Promise<void>;
