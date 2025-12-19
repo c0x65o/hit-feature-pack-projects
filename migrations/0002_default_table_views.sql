@@ -2,36 +2,8 @@
 -- Seed default views for Projects table
 -- Idempotent (safe to re-run)
 
--- Canonical: group/filter by statusId, but keep a human-friendly ordering based on labels.
-WITH desired_status_order AS (
-  SELECT * FROM (VALUES
-    (1, 'Backburner'),
-    (2, 'Not Launched'),
-    (3, 'Draft'),
-    (4, 'Active'),
-    (5, 'Completed'),
-    (6, 'Cancelled'),
-    (7, 'Archived')
-  ) AS t(sort_order, label)
-),
-status_ids AS (
-  SELECT
-    dso.sort_order,
-    ps.id::text AS status_id_text,
-    ps.label
-  FROM desired_status_order dso
-  JOIN project_statuses ps ON ps.label = dso.label
-),
-status_group_by_json AS (
-  SELECT jsonb_build_object(
-    'field',
-    'statusId',
-    'sortOrder',
-    jsonb_agg(status_id_text ORDER BY sort_order)
-  ) AS group_by
-  FROM status_ids
-),
-archived_status AS (
+-- Canonical: group/filter by statusId; group order is derived from data (ex: statusSortOrder) in the UI.
+WITH archived_status AS (
   SELECT ps.id::text AS status_id_text
   FROM project_statuses ps
   WHERE ps.label = 'Archived'
@@ -65,7 +37,7 @@ SELECT
   FALSE,
   NULL,
   '[{"id": "lastUpdatedOnTimestamp", "desc": true}]'::jsonb,
-  (SELECT group_by FROM status_group_by_json),
+  '{"field":"statusId"}'::jsonb,
   NOW(),
   NOW()
 WHERE NOT EXISTS (

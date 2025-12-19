@@ -38,14 +38,18 @@ CREATE INDEX IF NOT EXISTS "project_statuses_active_idx" ON "project_statuses" (
 -- Seed default statuses (safe to re-run)
 INSERT INTO "project_statuses" ("label", "color", "sort_order", "is_active")
 VALUES
-  ('Draft', '#64748b', 10, TRUE),
-  ('Active', '#22c55e', 20, TRUE),
-  ('Completed', '#3b82f6', 30, TRUE),
-  ('Cancelled', '#ef4444', 40, TRUE),
-  ('Archived', '#94a3b8', 100, TRUE),
-  ('Not Launched', '#f59e0b', 60, TRUE),
-  ('Backburner', '#94a3b8', 70, TRUE)
-ON CONFLICT ("label") DO NOTHING;
+  ('Active', '#22c55e', 10, TRUE),
+  ('Not Launched', '#f59e0b', 20, TRUE),
+  ('Backburner', '#94a3b8', 30, TRUE),
+  ('Draft', '#64748b', 40, TRUE),
+  ('Completed', '#3b82f6', 50, TRUE),
+  ('Cancelled', '#ef4444', 60, TRUE),
+  ('Archived', '#94a3b8', 100, TRUE)
+ON CONFLICT ("label") DO UPDATE SET
+  "color" = EXCLUDED."color",
+  "sort_order" = EXCLUDED."sort_order",
+  "is_active" = EXCLUDED."is_active",
+  "updated_at" = NOW();
 
 -- Remove legacy per-user membership table
 DROP TABLE IF EXISTS "project_members";

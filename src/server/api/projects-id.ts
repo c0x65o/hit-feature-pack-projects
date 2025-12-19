@@ -114,6 +114,7 @@ export async function GET(request: NextRequest) {
         slug: projects.slug,
         description: projects.description,
         statusId: projects.statusId,
+        statusSortOrder: projectStatuses.sortOrder,
         companyId: projects.companyId,
         createdByUserId: projects.createdByUserId,
         createdOnTimestamp: projects.createdOnTimestamp,
@@ -121,6 +122,7 @@ export async function GET(request: NextRequest) {
         lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
       })
       .from(projects)
+      .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id))
       .where(eq(projects.id, id))
       .limit(1);
 
