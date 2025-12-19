@@ -42,7 +42,9 @@ VALUES
   ('Active', '#22c55e', 20, TRUE),
   ('Completed', '#3b82f6', 30, TRUE),
   ('Cancelled', '#ef4444', 40, TRUE),
-  ('Archived', '#94a3b8', 50, TRUE)
+  ('Archived', '#94a3b8', 100, TRUE),
+  ('Not Launched', '#f59e0b', 60, TRUE),
+  ('Backburner', '#94a3b8', 70, TRUE)
 ON CONFLICT ("label") DO NOTHING;
 
 -- Remove legacy per-user membership table
