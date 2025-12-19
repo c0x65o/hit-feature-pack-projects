@@ -21,11 +21,12 @@ function DashboardContent() {
     });
     // Handle view filter changes from DataTable
     const handleViewFiltersChange = useCallback((filters) => {
-        // Check for status filter (view seeds use statusLabel)
-        const statusFilter = filters.find((f) => f.field === 'statusLabel');
+        // Check for status filter (canonical: statusId)
+        const statusFilter = filters.find((f) => f.field === 'statusId');
         if (statusFilter) {
             const filterValue = String(statusFilter.value || '');
-            if (statusFilter.operator === 'notEquals' && filterValue === 'Archived') {
+            const archived = activeStatuses.find((s) => s.label === 'Archived');
+            if (archived && statusFilter.operator === 'notEquals' && filterValue === archived.id) {
                 setExcludeArchived(true);
             }
             else {
@@ -36,7 +37,7 @@ function DashboardContent() {
             // No status filter means show all
             setExcludeArchived(false);
         }
-    }, []);
+    }, [activeStatuses]);
     const { data, loading, error, refresh } = useProjects({
         page,
         pageSize,
@@ -46,7 +47,7 @@ function DashboardContent() {
     });
     // Build status options from loaded statuses
     const statusOptions = useMemo(() => {
-        return activeStatuses.map((s) => ({ value: s.label, label: s.label }));
+        return activeStatuses.map((s) => ({ value: s.id, label: s.label }));
     }, [activeStatuses]);
     const handleRowClick = (row) => {
         const id = String(row?.id || '');
@@ -77,7 +78,7 @@ function DashboardContent() {
             },
         },
         {
-            key: 'statusLabel',
+            key: 'statusId',
             label: 'Status',
             sortable: true,
             filterType: 'select',

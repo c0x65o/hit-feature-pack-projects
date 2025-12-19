@@ -132,16 +132,13 @@ export async function GET(request) {
             slug: projects.slug,
             description: projects.description,
             statusId: projects.statusId,
-            statusLabel: projectStatuses.label,
-            statusColor: projectStatuses.color,
             companyId: projects.companyId,
             createdByUserId: projects.createdByUserId,
             createdOnTimestamp: projects.createdOnTimestamp,
             lastUpdatedByUserId: projects.lastUpdatedByUserId,
             lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
         })
-            .from(projects)
-            .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id));
+            .from(projects);
         const items = whereClause
             ? await baseQuery.where(whereClause).orderBy(orderDirection).limit(pageSize).offset(offset)
             : await baseQuery.orderBy(orderDirection).limit(pageSize).offset(offset);

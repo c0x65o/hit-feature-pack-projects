@@ -2,6 +2,42 @@
 -- Seed default views for Projects table
 -- Idempotent (safe to re-run)
 
+-- Canonical: group/filter by statusId, but keep a human-friendly ordering based on labels.
+WITH desired_status_order AS (
+  SELECT * FROM (VALUES
+    (1, 'Backburner'),
+    (2, 'Not Launched'),
+    (3, 'Draft'),
+    (4, 'Active'),
+    (5, 'Completed'),
+    (6, 'Cancelled'),
+    (7, 'Archived')
+  ) AS t(sort_order, label)
+),
+status_ids AS (
+  SELECT
+    dso.sort_order,
+    ps.id::text AS status_id_text,
+    ps.label
+  FROM desired_status_order dso
+  JOIN project_statuses ps ON ps.label = dso.label
+),
+status_group_by_json AS (
+  SELECT jsonb_build_object(
+    'field',
+    'statusId',
+    'sortOrder',
+    jsonb_agg(status_id_text ORDER BY sort_order)
+  ) AS group_by
+  FROM status_ids
+),
+archived_status AS (
+  SELECT ps.id::text AS status_id_text
+  FROM project_statuses ps
+  WHERE ps.label = 'Archived'
+  LIMIT 1
+)
+
 -- 1. Insert "Status Group" view (default) - groups by status
 INSERT INTO "table_views" (
   "id",
@@ -29,7 +65,7 @@ SELECT
   FALSE,
   NULL,
   '[{"id": "lastUpdatedOnTimestamp", "desc": true}]'::jsonb,
-  '{"field": "statusLabel", "sortOrder": ["Backburner", "Not Launched", "Draft", "Active", "Completed", "Cancelled", "Archived"]}'::jsonb,
+  (SELECT group_by FROM status_group_by_json),
   NOW(),
   NOW()
 WHERE NOT EXISTS (
@@ -122,9 +158,9 @@ INSERT INTO "table_view_filters" (
 SELECT
   gen_random_uuid(),
   tv.id,
-  'statusLabel',
+  'statusId',
   'notEquals',
-  'Archived',
+  (SELECT status_id_text FROM archived_status),
   'string',
   0
 FROM "table_views" tv
@@ -134,6 +170,6 @@ WHERE tv."table_id" = 'projects'
   AND NOT EXISTS (
     SELECT 1 FROM "table_view_filters" tvf
     WHERE tvf."view_id" = tv.id
-      AND tvf."field" = 'statusLabel'
+      AND tvf."field" = 'statusId'
   );
 
