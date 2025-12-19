@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useUi } from '@hit/ui-kit';
-import { useProjectStatus } from '../hooks/useProjectStatuses';
+import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
-export function EditProjectStatus(props: { id?: string }) {
+export function CreateProjectStatus() {
   const { Page, Card, Button, Input, Select } = useUi();
-  const statusId = props.id;
-  const { status, loading: statusLoading, updateStatus } = useProjectStatus(statusId);
-
+  const { createStatus } = useProjectStatuses();
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('#64748b');
   const [sortOrder, setSortOrder] = useState('0');
@@ -16,20 +14,10 @@ export function EditProjectStatus(props: { id?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status) {
-      setLabel(status.label);
-      setColor(status.color || '#64748b');
-      setSortOrder(String(status.sortOrder || 0));
-      setIsActive(status.isActive);
-    }
-  }, [status]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!statusId) return;
-
     setError(null);
+
     if (!label.trim()) {
       setError('Label is required');
       return;
@@ -37,7 +25,7 @@ export function EditProjectStatus(props: { id?: string }) {
 
     setLoading(true);
     try {
-      await updateStatus({
+      await createStatus({
         label: label.trim(),
         color: color.trim() || null,
         sortOrder: Number(sortOrder || 0),
@@ -45,7 +33,7 @@ export function EditProjectStatus(props: { id?: string }) {
       });
       window.location.href = '/projects/setup/statuses';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      setError(err instanceof Error ? err.message : 'Failed to create status');
     } finally {
       setLoading(false);
     }
@@ -59,50 +47,15 @@ export function EditProjectStatus(props: { id?: string }) {
     window.location.href = path;
   };
 
-  const breadcrumbs = status
-    ? [
-        { label: 'Projects', href: '/projects' },
-        { label: 'Setup', href: '/projects/setup/statuses' },
-        { label: 'Statuses', href: '/projects/setup/statuses' },
-        { label: status.label, href: `/projects/setup/statuses/${statusId}` },
-        { label: 'Edit' },
-      ]
-    : [
-        { label: 'Projects', href: '/projects' },
-        { label: 'Setup', href: '/projects/setup/statuses' },
-        { label: 'Statuses', href: '/projects/setup/statuses' },
-        { label: 'Edit Status' },
-      ];
-
-  if (statusLoading) {
-    return (
-      <Page title="Edit Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
-        <Card>
-          <div style={{ textAlign: 'center', padding: '24px' }}>Loading status...</div>
-        </Card>
-      </Page>
-    );
-  }
-
-  if (!status) {
-    return (
-      <Page title="Edit Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
-        <Card>
-          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--hit-error, #ef4444)' }}>
-            Status not found
-          </div>
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
-            <Button variant="secondary" onClick={() => (window.location.href = '/projects/setup/statuses')}>
-              Back to Statuses
-            </Button>
-          </div>
-        </Card>
-      </Page>
-    );
-  }
+  const breadcrumbs = [
+    { label: 'Projects', href: '/projects' },
+    { label: 'Setup', href: '/projects/setup/statuses' },
+    { label: 'Statuses', href: '/projects/setup/statuses' },
+    { label: 'Create Status' },
+  ];
 
   return (
-    <Page title="Edit Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
+    <Page title="Create Status" breadcrumbs={breadcrumbs} onNavigate={navigate}>
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
@@ -194,7 +147,7 @@ export function EditProjectStatus(props: { id?: string }) {
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={loading || !label.trim()}>
-              Save Changes
+              Create Status
             </Button>
           </div>
         </form>
@@ -203,4 +156,5 @@ export function EditProjectStatus(props: { id?: string }) {
   );
 }
 
-export default EditProjectStatus;
+export default CreateProjectStatus;
+

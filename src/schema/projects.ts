@@ -77,7 +77,6 @@ export const projectStatuses = pgTable(
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
-    labelIdx: unique('project_statuses_label_unique').on(table.label),
     sortIdx: index('project_statuses_sort_idx').on(table.sortOrder),
     activeIdx: index('project_statuses_active_idx').on(table.isActive),
   })

@@ -1,30 +1,19 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useUi } from '@hit/ui-kit';
-import { useProjectStatus } from '../hooks/useProjectStatuses';
-export function EditProjectStatus(props) {
+import { useProjectStatuses } from '../hooks/useProjectStatuses';
+export function CreateProjectStatus() {
     const { Page, Card, Button, Input, Select } = useUi();
-    const statusId = props.id;
-    const { status, loading: statusLoading, updateStatus } = useProjectStatus(statusId);
+    const { createStatus } = useProjectStatuses();
     const [label, setLabel] = useState('');
     const [color, setColor] = useState('#64748b');
     const [sortOrder, setSortOrder] = useState('0');
     const [isActive, setIsActive] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    useEffect(() => {
-        if (status) {
-            setLabel(status.label);
-            setColor(status.color || '#64748b');
-            setSortOrder(String(status.sortOrder || 0));
-            setIsActive(status.isActive);
-        }
-    }, [status]);
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!statusId)
-            return;
         setError(null);
         if (!label.trim()) {
             setError('Label is required');
@@ -32,7 +21,7 @@ export function EditProjectStatus(props) {
         }
         setLoading(true);
         try {
-            await updateStatus({
+            await createStatus({
                 label: label.trim(),
                 color: color.trim() || null,
                 sortOrder: Number(sortOrder || 0),
@@ -41,7 +30,7 @@ export function EditProjectStatus(props) {
             window.location.href = '/projects/setup/statuses';
         }
         catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update status');
+            setError(err instanceof Error ? err.message : 'Failed to create status');
         }
         finally {
             setLoading(false);
@@ -53,27 +42,13 @@ export function EditProjectStatus(props) {
     const navigate = (path) => {
         window.location.href = path;
     };
-    const breadcrumbs = status
-        ? [
-            { label: 'Projects', href: '/projects' },
-            { label: 'Setup', href: '/projects/setup/statuses' },
-            { label: 'Statuses', href: '/projects/setup/statuses' },
-            { label: status.label, href: `/projects/setup/statuses/${statusId}` },
-            { label: 'Edit' },
-        ]
-        : [
-            { label: 'Projects', href: '/projects' },
-            { label: 'Setup', href: '/projects/setup/statuses' },
-            { label: 'Statuses', href: '/projects/setup/statuses' },
-            { label: 'Edit Status' },
-        ];
-    if (statusLoading) {
-        return (_jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsx("div", { style: { textAlign: 'center', padding: '24px' }, children: "Loading status..." }) }) }));
-    }
-    if (!status) {
-        return (_jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsxs(Card, { children: [_jsx("div", { style: { textAlign: 'center', padding: '24px', color: 'var(--hit-error, #ef4444)' }, children: "Status not found" }), _jsx("div", { style: { textAlign: 'center', marginTop: '16px' }, children: _jsx(Button, { variant: "secondary", onClick: () => (window.location.href = '/projects/setup/statuses'), children: "Back to Statuses" }) })] }) }));
-    }
-    return (_jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx("div", { style: {
+    const breadcrumbs = [
+        { label: 'Projects', href: '/projects' },
+        { label: 'Setup', href: '/projects/setup/statuses' },
+        { label: 'Statuses', href: '/projects/setup/statuses' },
+        { label: 'Create Status' },
+    ];
+    return (_jsx(Page, { title: "Create Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx("div", { style: {
                             padding: '12px',
                             backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
                             border: '1px solid var(--hit-error, #ef4444)',
@@ -98,6 +73,6 @@ export function EditProjectStatus(props) {
                                         } }), _jsx(Input, { value: color, onChange: setColor, placeholder: "#64748b", disabled: loading, className: "flex-1" })] })] }), _jsx(Input, { label: "Sort Order", value: sortOrder, onChange: setSortOrder, placeholder: "0", disabled: loading, type: "number" }), _jsx(Select, { label: "Active?", value: isActive ? 'yes' : 'no', onChange: (v) => setIsActive(String(v) === 'yes'), options: [
                             { value: 'yes', label: 'Yes' },
                             { value: 'no', label: 'No' },
-                        ], disabled: loading }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !label.trim(), children: "Save Changes" })] })] }) }) }));
+                        ], disabled: loading }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !label.trim(), children: "Create Status" })] })] }) }) }));
 }
-export default EditProjectStatus;
+export default CreateProjectStatus;

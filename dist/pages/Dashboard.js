@@ -14,26 +14,40 @@ function DashboardContent() {
     // Load available statuses for the status filter dropdown (uses shared context)
     const { activeStatuses } = useProjectStatuses();
     // View state - managed by DataTable's view system when enableViews is true
-    const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived
+    const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived (matches "Active Projects" default view)
     const [sortConfig, setSortConfig] = useState({
         sortBy: 'lastUpdatedOnTimestamp',
         sortOrder: 'desc',
     });
     // Handle view filter changes from DataTable
     const handleViewFiltersChange = useCallback((filters) => {
+        console.log('[Dashboard] handleViewFiltersChange called with filters:', JSON.stringify(filters, null, 2));
         // Check for status filter (case-insensitive comparison)
         const statusFilter = filters.find((f) => f.field === 'status');
         if (statusFilter) {
-            const filterValue = String(statusFilter.value || '').toLowerCase();
+            // Handle both string and object value formats
+            const rawValue = statusFilter.value;
+            const filterValue = typeof rawValue === 'string'
+                ? rawValue.toLowerCase()
+                : String(rawValue || '').toLowerCase();
+            console.log('[Dashboard] Found status filter:', {
+                operator: statusFilter.operator,
+                rawValue,
+                filterValue,
+                fullFilter: statusFilter
+            });
             if (statusFilter.operator === 'notEquals' && filterValue === 'archived') {
+                console.log('[Dashboard] Setting excludeArchived to true');
                 setExcludeArchived(true);
             }
             else {
+                console.log('[Dashboard] Setting excludeArchived to false (different filter)');
                 setExcludeArchived(false);
             }
         }
         else {
             // No status filter means show all
+            console.log('[Dashboard] No status filter found, setting excludeArchived to false');
             setExcludeArchived(false);
         }
     }, []);
