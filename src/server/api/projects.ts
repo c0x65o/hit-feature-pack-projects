@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(projects.status, status));
     }
     if (excludeArchived) {
-      conditions.push(sql`${projects.status} != 'Archived'`);
+      conditions.push(sql`${projects.status} != 'archived'`);
     }
     if (search) {
       conditions.push(

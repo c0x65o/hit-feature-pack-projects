@@ -88,7 +88,7 @@ export async function GET(request) {
             conditions.push(eq(projects.status, status));
         }
         if (excludeArchived) {
-            conditions.push(sql `${projects.status} != 'Archived'`);
+            conditions.push(sql `${projects.status} != 'archived'`);
         }
         if (search) {
             conditions.push(or(like(projects.name, `%${search}%`), like(projects.description, `%${search}%`), like(projects.slug, `%${search}%`)));
