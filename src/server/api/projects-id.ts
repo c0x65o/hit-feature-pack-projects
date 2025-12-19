@@ -10,6 +10,24 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 /**
+ * Read feature pack options from JWT claims
+ */
+interface ProjectsPackOptions {
+  enable_crm_company_association?: boolean;
+  require_crm_company?: boolean;
+}
+
+function getPackOptions(request: NextRequest): ProjectsPackOptions {
+  const user = extractUserFromRequest(request);
+  if (!user) return {};
+  
+  // Feature pack options are stored in JWT claims under featurePacks.projects.options
+  const featurePacks = (user as any).featurePacks || {};
+  const packConfig = featurePacks['projects'] || {};
+  return packConfig.options || {};
+}
+
+/**
  * Extract project ID from URL path
  */
 function extractId(request: NextRequest): string | null {
@@ -159,6 +177,27 @@ export async function PUT(request: NextRequest) {
       updates.slug = body.slug || null;
     }
 
+    // Handle companyId based on feature flags
+    const options = getPackOptions(request);
+    if (options.enable_crm_company_association) {
+      if (body.companyId !== undefined) {
+        if (body.companyId === null || body.companyId === '') {
+          // Clearing company association
+          if (options.require_crm_company) {
+            return NextResponse.json({ error: 'Company is required for projects' }, { status: 400 });
+          }
+          updates.companyId = null;
+        } else {
+          // Validate UUID format
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (!uuidRegex.test(body.companyId)) {
+            return NextResponse.json({ error: 'Invalid company ID format' }, { status: 400 });
+          }
+          updates.companyId = body.companyId;
+        }
+      }
+    }
+
     // Update project
     const [project] = await db
       .update(projects)
@@ -168,6 +207,13 @@ export async function PUT(request: NextRequest) {
 
     // Log activity
     const activityMetadata: Record<string, unknown> = { projectId: project.id };
+    
+    // Track company changes
+    if (updates.companyId !== undefined && updates.companyId !== existing.companyId) {
+      activityMetadata.oldCompanyId = existing.companyId;
+      activityMetadata.newCompanyId = updates.companyId;
+    }
+    
     if (body.status && body.status !== existing.status) {
       await logActivity(
         db,

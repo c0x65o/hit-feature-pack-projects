@@ -43,6 +43,8 @@ export const projects = pgTable(
     slug: varchar('slug', { length: 255 }), // URL-friendly identifier
     description: text('description'),
     status: varchar('status', { length: 50 }).default('active').notNull(), // active, archived, completed, cancelled
+    // CRM Company association (optional, controlled by feature flag)
+    companyId: uuid('company_id'), // References crm_companies.id when CRM is enabled
     // Audit fields
     createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
     createdOnTimestamp: timestamp('created_on_timestamp').defaultNow().notNull(),
@@ -53,6 +55,7 @@ export const projects = pgTable(
     slugIdx: unique('projects_slug_unique').on(table.slug),
     statusIdx: index('projects_status_idx').on(table.status),
     createdByIdx: index('projects_created_by_idx').on(table.createdByUserId),
+    companyIdx: index('projects_company_idx').on(table.companyId),
   })
 );
 

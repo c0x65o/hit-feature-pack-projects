@@ -8,6 +8,15 @@ import { isAdmin } from '../lib/access';
 // Required for Next.js App Router
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+function getPackOptions(request) {
+    const user = extractUserFromRequest(request);
+    if (!user)
+        return {};
+    // Feature pack options are stored in JWT claims under featurePacks.projects.options
+    const featurePacks = user.featurePacks || {};
+    const packConfig = featurePacks['projects'] || {};
+    return packConfig.options || {};
+}
 /**
  * Generate URL-friendly slug from name
  */
@@ -66,6 +75,7 @@ export async function GET(request) {
         const offset = (page - 1) * pageSize;
         // Filtering
         const status = searchParams.get('status');
+        const excludeArchived = searchParams.get('excludeArchived') === 'true';
         const search = searchParams.get('search') || '';
         // Sorting
         const sortBy = searchParams.get('sortBy') || 'createdOnTimestamp';
@@ -74,6 +84,9 @@ export async function GET(request) {
         const conditions = [];
         if (status) {
             conditions.push(eq(projects.status, status));
+        }
+        if (excludeArchived) {
+            conditions.push(sql `${projects.status} != 'archived'`);
         }
         if (search) {
             conditions.push(or(like(projects.name, `%${search}%`), like(projects.description, `%${search}%`), like(projects.slug, `%${search}%`)));
@@ -125,9 +138,25 @@ export async function POST(request) {
         }
         const body = await request.json();
         const db = getDb();
+        const options = getPackOptions(request);
         // Validate required fields
         if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
             return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
+        }
+        // Handle companyId based on feature flags
+        let companyId = null;
+        if (options.enable_crm_company_association) {
+            if (body.companyId) {
+                // Validate UUID format
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                if (!uuidRegex.test(body.companyId)) {
+                    return NextResponse.json({ error: 'Invalid company ID format' }, { status: 400 });
+                }
+                companyId = body.companyId;
+            }
+            else if (options.require_crm_company) {
+                return NextResponse.json({ error: 'Company is required for projects' }, { status: 400 });
+            }
         }
         // Generate slug if not provided
         const slug = body.slug || generateSlug(body.name);
@@ -159,12 +188,13 @@ export async function POST(request) {
             slug,
             description: body.description || null,
             status: body.status || (await getDefaultProjectStatusKey(db)),
+            companyId,
             createdByUserId: user.sub,
             lastUpdatedByUserId: user.sub,
         })
             .returning();
         // Log activity
-        await logActivity(db, project.id, 'project.created', user.sub, `Project "${project.name}" was created`, { projectId: project.id, projectName: project.name });
+        await logActivity(db, project.id, 'project.created', user.sub, `Project "${project.name}" was created`, { projectId: project.id, projectName: project.name, companyId });
         return NextResponse.json({ data: project }, { status: 201 });
     }
     catch (error) {

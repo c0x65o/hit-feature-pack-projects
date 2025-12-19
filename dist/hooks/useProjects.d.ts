@@ -4,6 +4,7 @@ interface UseProjectsOptions {
     pageSize?: number;
     search?: string;
     status?: string;
+    excludeArchived?: boolean;
     sortBy?: 'name' | 'lastUpdatedOnTimestamp';
     sortOrder?: 'asc' | 'desc';
 }
@@ -23,6 +24,7 @@ export declare function useProjects(options?: UseProjectsOptions): {
         slug: string | null;
         description: string | null;
         status: string;
+        companyId: string | null;
         createdByUserId: string;
         createdOnTimestamp: Date;
         lastUpdatedByUserId: string | null;
@@ -47,6 +49,7 @@ export declare function useProject(id: string | undefined): {
         slug: string | null;
         description: string | null;
         status: string;
+        companyId: string | null;
         createdByUserId: string;
         createdOnTimestamp: Date;
         lastUpdatedByUserId: string | null;

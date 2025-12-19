@@ -7,6 +7,15 @@ import { extractUserFromRequest } from '../auth';
 import { requireProjectPermission } from '../lib/access';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+function getPackOptions(request) {
+    const user = extractUserFromRequest(request);
+    if (!user)
+        return {};
+    // Feature pack options are stored in JWT claims under featurePacks.projects.options
+    const featurePacks = user.featurePacks || {};
+    const packConfig = featurePacks['projects'] || {};
+    return packConfig.options || {};
+}
 /**
  * Extract project ID from URL path
  */
@@ -128,6 +137,27 @@ export async function PUT(request) {
         if (body.slug !== undefined) {
             updates.slug = body.slug || null;
         }
+        // Handle companyId based on feature flags
+        const options = getPackOptions(request);
+        if (options.enable_crm_company_association) {
+            if (body.companyId !== undefined) {
+                if (body.companyId === null || body.companyId === '') {
+                    // Clearing company association
+                    if (options.require_crm_company) {
+                        return NextResponse.json({ error: 'Company is required for projects' }, { status: 400 });
+                    }
+                    updates.companyId = null;
+                }
+                else {
+                    // Validate UUID format
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    if (!uuidRegex.test(body.companyId)) {
+                        return NextResponse.json({ error: 'Invalid company ID format' }, { status: 400 });
+                    }
+                    updates.companyId = body.companyId;
+                }
+            }
+        }
         // Update project
         const [project] = await db
             .update(projects)
@@ -136,6 +166,11 @@ export async function PUT(request) {
             .returning();
         // Log activity
         const activityMetadata = { projectId: project.id };
+        // Track company changes
+        if (updates.companyId !== undefined && updates.companyId !== existing.companyId) {
+            activityMetadata.oldCompanyId = existing.companyId;
+            activityMetadata.newCompanyId = updates.companyId;
+        }
         if (body.status && body.status !== existing.status) {
             await logActivity(db, project.id, 'project.status_changed', user.sub, `Project status changed from "${existing.status}" to "${project.status}"`, { ...activityMetadata, oldStatus: existing.status, newStatus: project.status });
         }

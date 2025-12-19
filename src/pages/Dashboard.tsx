@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
-import { useProjectStatuses } from '../hooks/useProjectStatuses';
-import { MoreVertical, Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 function isAdminUser(): boolean {
   if (typeof window === 'undefined') return false;
@@ -27,23 +26,40 @@ function isAdminUser(): boolean {
 }
 
 export function Dashboard() {
-  const { Page, Card, Button, Input, Select, Table, EmptyState } = useUi();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'name' | 'lastUpdatedOnTimestamp'>('lastUpdatedOnTimestamp');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const { Page, Card, Button, DataTable } = useUi();
   const [page, setPage] = useState(1);
   const pageSize = 25;
+  
+  // View state - managed by DataTable's view system when enableViews is true
+  const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived
+  const [sortConfig, setSortConfig] = useState<{ sortBy: 'name' | 'lastUpdatedOnTimestamp'; sortOrder: 'asc' | 'desc' }>({
+    sortBy: 'lastUpdatedOnTimestamp',
+    sortOrder: 'desc',
+  });
+
+  // Handle view filter changes from DataTable
+  const handleViewFiltersChange = useCallback((filters: Array<{ field: string; operator: string; value: any }>) => {
+    // Check for status filter
+    const statusFilter = filters.find((f) => f.field === 'status');
+    if (statusFilter) {
+      if (statusFilter.operator === 'notEquals' && statusFilter.value === 'archived') {
+        setExcludeArchived(true);
+      } else {
+        setExcludeArchived(false);
+      }
+    } else {
+      // No status filter means show all
+      setExcludeArchived(false);
+    }
+  }, []);
 
   const { data, loading, error, refresh } = useProjects({
     page,
     pageSize,
-    search,
-    status: statusFilter || undefined,
-    sortBy,
-    sortOrder,
+    excludeArchived,
+    sortBy: sortConfig.sortBy,
+    sortOrder: sortConfig.sortOrder,
   });
-  const { activeStatuses } = useProjectStatuses();
 
   const handleRowClick = (row: Record<string, unknown>) => {
     const id = String((row as any)?.id || '');
@@ -63,29 +79,31 @@ export function Dashboard() {
     {
       key: 'name',
       label: 'Name',
+      sortable: true,
       render: (_value: unknown, row: Record<string, unknown>) => {
         const project = row as any;
         return (
-        <a
-          href={`/projects/${String(project.id)}`}
-          style={{
-            color: 'var(--hit-primary, #3b82f6)',
-            textDecoration: 'none',
-            fontWeight: '500',
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            handleRowClick(project as any);
-          }}
-        >
-          {String(project.name || '')}
-        </a>
+          <a
+            href={`/projects/${String(project.id)}`}
+            style={{
+              color: 'var(--hit-primary, #3b82f6)',
+              textDecoration: 'none',
+              fontWeight: '500',
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              handleRowClick(project as any);
+            }}
+          >
+            {String(project.name || '')}
+          </a>
         );
       },
     },
     {
       key: 'status',
       label: 'Status',
+      sortable: true,
       render: (_value: unknown, row: Record<string, unknown>) => (
         <ProjectStatusBadge status={String((row as any)?.status || '')} />
       ),
@@ -93,6 +111,7 @@ export function Dashboard() {
     {
       key: 'lastUpdatedOnTimestamp',
       label: 'Updated',
+      sortable: true,
       render: (_value: unknown, row: Record<string, unknown>) => {
         const ts = (row as any)?.lastUpdatedOnTimestamp;
         const d = ts ? new Date(ts) : null;
@@ -122,99 +141,30 @@ export function Dashboard() {
       }
     >
       <Card>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Controls Row */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div style={{ flex: '1 1 300px', minWidth: '200px' }}>
-              <Input
-                placeholder="Search by name, slug, description"
-                value={search}
-                onChange={setSearch}
-                style={{ position: 'relative' }}
-              />
-            </div>
-            <div style={{ minWidth: '150px' }}>
-              <Select
-                placeholder="All Statuses"
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={[
-                  { value: '', label: 'All Statuses' },
-                  ...activeStatuses.map((s) => ({ value: s.key, label: s.label })),
-                ]}
-              />
-            </div>
-            <div style={{ minWidth: '180px' }}>
-              <Select
-                placeholder="Sort by"
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(value) => {
-                  const [newSortBy, newSortOrder] = value.split('-');
-                  setSortBy(newSortBy as typeof sortBy);
-                  setSortOrder(newSortOrder as typeof sortOrder);
-                }}
-                options={[
-                  { value: 'lastUpdatedOnTimestamp-desc', label: 'Recently updated' },
-                  { value: 'lastUpdatedOnTimestamp-asc', label: 'Oldest updated' },
-                  { value: 'name-asc', label: 'Name (A-Z)' },
-                  { value: 'name-desc', label: 'Name (Z-A)' },
-                ]}
-              />
-            </div>
+        {error ? (
+          <div style={{ padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }}>
+            {error.message}
           </div>
-
-          {/* Results Table */}
-          {error ? (
-            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }}>
-              {error.message}
-            </div>
-          ) : projects.length === 0 && !loading ? (
-            <EmptyState
-              title="No projects yet"
-              description="Create your first project to track milestones, linked systems, and activity."
-              action={
-                <Button variant="primary" onClick={handleCreate}>
-                  Create Project
-                </Button>
-              }
-            />
-          ) : (
-            <>
-              <Table
-                columns={columns as any}
-                data={projects as any}
-                loading={loading}
-                onRowClick={(row: Record<string, unknown>) => handleRowClick(row)}
-              />
-              {pagination && pagination.totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--hit-muted-foreground, #64748b)' }}>
-                    Showing {((pagination.page - 1) * pagination.pageSize) + 1}-
-                    {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={pagination.page === 1 || loading}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                      disabled={pagination.page === pagination.totalPages || loading}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={projects}
+            loading={loading}
+            onRowClick={handleRowClick}
+            emptyMessage="No projects yet. Create your first project to track milestones, linked systems, and activity."
+            pageSize={pageSize}
+            total={pagination?.total}
+            page={page}
+            onPageChange={setPage}
+            manualPagination={true}
+            onRefresh={refresh}
+            refreshing={loading}
+            initialSorting={[{ id: 'lastUpdatedOnTimestamp', desc: true }]}
+            tableId="projects"
+            enableViews={true}
+            onViewFiltersChange={handleViewFiltersChange}
+          />
+        )}
       </Card>
     </Page>
   );

@@ -8,6 +8,7 @@ interface UseProjectsOptions {
   pageSize?: number;
   search?: string;
   status?: string;
+  excludeArchived?: boolean;
   sortBy?: 'name' | 'lastUpdatedOnTimestamp';
   sortOrder?: 'asc' | 'desc';
 }
@@ -23,7 +24,7 @@ interface PaginatedResponse<T> {
 }
 
 export function useProjects(options: UseProjectsOptions = {}) {
-  const { page = 1, pageSize = 25, search = '', status, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
+  const { page = 1, pageSize = 25, search = '', status, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
   const [data, setData] = useState<PaginatedResponse<Project> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -39,6 +40,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
       });
       if (search) params.set('search', search);
       if (status) params.set('status', status);
+      if (excludeArchived) params.set('excludeArchived', 'true');
 
       const res = await fetch(`/api/projects?${params.toString()}`);
       if (!res.ok) {
@@ -53,7 +55,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, status, sortBy, sortOrder]);
+  }, [page, pageSize, search, status, excludeArchived, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchData();

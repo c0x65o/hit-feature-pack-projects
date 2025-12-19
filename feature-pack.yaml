@@ -148,6 +148,20 @@ dependencies:
     - name: dashboard-shell
 
 # ─────────────────────────────────────────────────────────────────────────────
+# CONFIGURATION OPTIONS
+# ─────────────────────────────────────────────────────────────────────────────
+config:
+  schema:
+    enable_crm_company_association:
+      type: boolean
+      default: false
+      description: "Enable associating CRM companies with projects"
+    require_crm_company:
+      type: boolean
+      default: false
+      description: "When company association is enabled, require a company to be selected for each project"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # METRICS - Feature pack metric definitions
 # ─────────────────────────────────────────────────────────────────────────────
 metrics:

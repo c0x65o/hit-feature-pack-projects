@@ -85,6 +85,18 @@ export declare const projects: import("drizzle-orm/pg-core").PgTableWithColumns<
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
+        companyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "company_id";
+            tableName: "projects";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
         createdByUserId: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_by_user_id";
             tableName: "projects";

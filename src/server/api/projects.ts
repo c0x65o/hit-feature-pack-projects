@@ -17,6 +17,24 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 /**
+ * Read feature pack options from JWT claims
+ */
+interface ProjectsPackOptions {
+  enable_crm_company_association?: boolean;
+  require_crm_company?: boolean;
+}
+
+function getPackOptions(request: NextRequest): ProjectsPackOptions {
+  const user = extractUserFromRequest(request);
+  if (!user) return {};
+  
+  // Feature pack options are stored in JWT claims under featurePacks.projects.options
+  const featurePacks = (user as any).featurePacks || {};
+  const packConfig = featurePacks['projects'] || {};
+  return packConfig.options || {};
+}
+
+/**
  * Generate URL-friendly slug from name
  */
 function generateSlug(name: string): string {
@@ -88,6 +106,7 @@ export async function GET(request: NextRequest) {
 
     // Filtering
     const status = searchParams.get('status');
+    const excludeArchived = searchParams.get('excludeArchived') === 'true';
     const search = searchParams.get('search') || '';
 
     // Sorting
@@ -98,6 +117,9 @@ export async function GET(request: NextRequest) {
     const conditions = [];
     if (status) {
       conditions.push(eq(projects.status, status));
+    }
+    if (excludeArchived) {
+      conditions.push(sql`${projects.status} != 'archived'`);
     }
     if (search) {
       conditions.push(
@@ -164,10 +186,26 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const db = getDb();
+    const options = getPackOptions(request);
 
     // Validate required fields
     if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
+    }
+
+    // Handle companyId based on feature flags
+    let companyId: string | null = null;
+    if (options.enable_crm_company_association) {
+      if (body.companyId) {
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(body.companyId)) {
+          return NextResponse.json({ error: 'Invalid company ID format' }, { status: 400 });
+        }
+        companyId = body.companyId;
+      } else if (options.require_crm_company) {
+        return NextResponse.json({ error: 'Company is required for projects' }, { status: 400 });
+      }
     }
 
     // Generate slug if not provided
@@ -207,6 +245,7 @@ export async function POST(request: NextRequest) {
         slug,
         description: body.description || null,
         status: body.status || (await getDefaultProjectStatusKey(db)),
+        companyId,
         createdByUserId: user.sub,
         lastUpdatedByUserId: user.sub,
       })
@@ -219,7 +258,7 @@ export async function POST(request: NextRequest) {
       'project.created',
       user.sub,
       `Project "${project.name}" was created`,
-      { projectId: project.id, projectName: project.name }
+      { projectId: project.id, projectName: project.name, companyId }
     );
 
     return NextResponse.json({ data: project }, { status: 201 });
