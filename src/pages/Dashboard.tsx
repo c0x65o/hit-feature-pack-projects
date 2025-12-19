@@ -25,8 +25,8 @@ function DashboardContent() {
 
   // Handle view filter changes from DataTable
   const handleViewFiltersChange = useCallback((filters: Array<{ field: string; operator: string; value: any }>) => {
-    // Check for status filter
-    const statusFilter = filters.find((f) => f.field === 'status');
+    // Check for status filter (view seeds use statusLabel)
+    const statusFilter = filters.find((f) => f.field === 'statusLabel');
     if (statusFilter) {
       const filterValue = String(statusFilter.value || '');
       if (statusFilter.operator === 'notEquals' && filterValue === 'Archived') {
@@ -97,7 +97,7 @@ function DashboardContent() {
       filterType: 'select' as const,
       filterOptions: statusOptions,
       render: (_value: unknown, row: Record<string, unknown>) => (
-        <ProjectStatusBadge status={String((row as any)?.statusLabel || '')} />
+        <ProjectStatusBadge statusId={String((row as any)?.statusId || '')} />
       ),
     },
     {

@@ -3,7 +3,7 @@ interface UseProjectsOptions {
     page?: number;
     pageSize?: number;
     search?: string;
-    status?: string;
+    statusId?: string;
     excludeArchived?: boolean;
     sortBy?: 'name' | 'lastUpdatedOnTimestamp';
     sortOrder?: 'asc' | 'desc';
@@ -37,7 +37,7 @@ export declare function useProjects(options?: UseProjectsOptions): {
         name: string;
         slug?: string;
         description?: string;
-        status?: string;
+        statusId?: string;
     }) => Promise<any>;
     updateProject: (id: string, project: Partial<Project>) => Promise<any>;
     deleteProject: (id: string) => Promise<void>;
@@ -128,12 +128,6 @@ export interface ProjectFormInfo {
     entityFieldKey: string;
     count: number;
 }
-export declare function useProjectForms(projectId: string | undefined): {
-    forms: ProjectFormInfo[];
-    loading: boolean;
-    error: Error | null;
-    refresh: () => Promise<void>;
-};
 export interface FormEntryRecord {
     id: string;
     formId: string;
@@ -154,18 +148,5 @@ export interface PaginatedFormEntriesResponse {
         totalPages: number;
     };
 }
-export declare function useProjectFormEntries(projectId: string | undefined, formId: string | undefined, options?: {
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    entityFieldKey?: string;
-}): {
-    data: PaginatedFormEntriesResponse | null;
-    loading: boolean;
-    error: Error | null;
-    refresh: () => Promise<void>;
-};
 export {};
 //# sourceMappingURL=useProjects.d.ts.map

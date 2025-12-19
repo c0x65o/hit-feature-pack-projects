@@ -13,7 +13,7 @@ export function EditProject(props) {
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
-    const [status, setStatus] = useState('Active');
+    const [statusId, setStatusId] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     useEffect(() => {
@@ -21,7 +21,7 @@ export function EditProject(props) {
             setName(project.name);
             setSlug(project.slug || '');
             setDescription(project.description || '');
-            setStatus(String(project.statusLabel || 'Active'));
+            setStatusId(String(project.statusId || ''));
         }
     }, [project]);
     const handleSubmit = async (e) => {
@@ -39,7 +39,7 @@ export function EditProject(props) {
                 name: name.trim(),
                 slug: slug.trim() || null,
                 description: description.trim() || null,
-                status, // API accepts status (label) for backwards compat
+                statusId,
             });
             window.location.href = `/projects/${projectId}`;
         }
@@ -84,6 +84,6 @@ export function EditProject(props) {
                             borderRadius: '8px',
                             color: 'var(--hit-error, #ef4444)',
                             fontSize: '14px',
-                        }, children: error })), _jsx(Input, { label: "Project Name", value: name, onChange: setName, placeholder: "Enter project name", required: true, disabled: loading }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "URL-friendly identifier", disabled: loading }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: loading }), _jsx(Select, { label: "Status", value: status, onChange: (value) => setStatus(String(value)), options: activeStatuses.map((s) => ({ value: s.label, label: s.label })), disabled: loading || statusesLoading }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !name.trim(), children: "Save Changes" })] })] }) }) }));
+                        }, children: error })), _jsx(Input, { label: "Project Name", value: name, onChange: setName, placeholder: "Enter project name", required: true, disabled: loading }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "URL-friendly identifier", disabled: loading }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: loading }), _jsx(Select, { label: "Status", value: statusId, onChange: (value) => setStatusId(String(value)), options: activeStatuses.map((s) => ({ value: s.id, label: s.label })), disabled: loading || statusesLoading || !activeStatuses.length }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !name.trim(), children: "Save Changes" })] })] }) }) }));
 }
 export default EditProject;

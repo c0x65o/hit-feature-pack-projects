@@ -114,8 +114,6 @@ export async function GET(request: NextRequest) {
         slug: projects.slug,
         description: projects.description,
         statusId: projects.statusId,
-        statusLabel: projectStatuses.label,
-        statusColor: projectStatuses.color,
         companyId: projects.companyId,
         createdByUserId: projects.createdByUserId,
         createdOnTimestamp: projects.createdOnTimestamp,
@@ -123,7 +121,6 @@ export async function GET(request: NextRequest) {
         lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
       })
       .from(projects)
-      .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id))
       .where(eq(projects.id, id))
       .limit(1);
 
@@ -193,20 +190,13 @@ export async function PUT(request: NextRequest) {
       updates.description = body.description || null;
     }
 
-    // Handle statusId or status (label for backwards compat)
+    // Handle statusId (canonical)
     if (body.statusId !== undefined) {
       const ok = await isValidProjectStatusId(db, body.statusId);
       if (!ok) {
         return NextResponse.json({ error: `Invalid statusId: ${body.statusId}` }, { status: 400 });
       }
       updates.statusId = body.statusId;
-    } else if (body.status !== undefined) {
-      // Accept label for API backwards compatibility, resolve to ID
-      const statusId = await getStatusIdByLabel(db, body.status);
-      if (!statusId) {
-        return NextResponse.json({ error: `Invalid status: ${body.status}` }, { status: 400 });
-      }
-      updates.statusId = statusId;
     }
 
     if (body.slug !== undefined) {

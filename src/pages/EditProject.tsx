@@ -5,7 +5,7 @@ import { useUi } from '@hit/ui-kit';
 import { useProject, useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
-export function EditProject(props: { id?: string }) {
+export function EditProject(props: { id: string }) {
   const { Page, Card, Button, Input, TextArea, Select } = useUi();
   const projectId = props.id;
   const { project, loading: projectLoading } = useProject(projectId);
@@ -14,7 +14,7 @@ export function EditProject(props: { id?: string }) {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<string>('Active');
+  const [statusId, setStatusId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export function EditProject(props: { id?: string }) {
       setName(project.name);
       setSlug(project.slug || '');
       setDescription(project.description || '');
-            setStatus(String((project as any).statusLabel || 'Active'));
+      setStatusId(String((project as any).statusId || ''));
     }
   }, [project]);
 
@@ -43,7 +43,7 @@ export function EditProject(props: { id?: string }) {
         name: name.trim(),
         slug: slug.trim() || null,
         description: description.trim() || null,
-        status, // API accepts status (label) for backwards compat
+        statusId,
       } as any);
       window.location.href = `/projects/${projectId}`;
     } catch (err) {
@@ -150,10 +150,10 @@ export function EditProject(props: { id?: string }) {
 
           <Select
             label="Status"
-            value={status}
-            onChange={(value) => setStatus(String(value))}
-            options={activeStatuses.map((s) => ({ value: s.label, label: s.label }))}
-            disabled={loading || statusesLoading}
+            value={statusId}
+            onChange={(value) => setStatusId(String(value))}
+            options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
+            disabled={loading || statusesLoading || !activeStatuses.length}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>

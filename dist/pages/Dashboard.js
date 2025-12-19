@@ -21,8 +21,8 @@ function DashboardContent() {
     });
     // Handle view filter changes from DataTable
     const handleViewFiltersChange = useCallback((filters) => {
-        // Check for status filter
-        const statusFilter = filters.find((f) => f.field === 'status');
+        // Check for status filter (view seeds use statusLabel)
+        const statusFilter = filters.find((f) => f.field === 'statusLabel');
         if (statusFilter) {
             const filterValue = String(statusFilter.value || '');
             if (statusFilter.operator === 'notEquals' && filterValue === 'Archived') {
@@ -82,7 +82,7 @@ function DashboardContent() {
             sortable: true,
             filterType: 'select',
             filterOptions: statusOptions,
-            render: (_value, row) => (_jsx(ProjectStatusBadge, { status: String(row?.statusLabel || '') })),
+            render: (_value, row) => (_jsx(ProjectStatusBadge, { statusId: String(row?.statusId || '') })),
         },
         {
             key: 'lastUpdatedOnTimestamp',

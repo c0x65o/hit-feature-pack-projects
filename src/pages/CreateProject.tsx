@@ -12,17 +12,17 @@ export function CreateProject() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<string>('Active');
+  const [statusId, setStatusId] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeStatuses.length > 0 && !status) {
+    if (activeStatuses.length > 0 && !statusId) {
       // Set to first active status sorted by sortOrder
       const sorted = [...activeStatuses].sort((a, b) => a.sortOrder - b.sortOrder);
-      setStatus(sorted[0].label);
+      setStatusId(sorted[0].id);
     }
-  }, [activeStatuses, status]);
+  }, [activeStatuses, statusId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +39,7 @@ export function CreateProject() {
         name: name.trim(),
         slug: slug.trim() || undefined,
         description: description.trim() || undefined,
-        status,
+        statusId,
       });
       window.location.href = `/projects/${project.data.id}`;
     } catch (err) {
@@ -109,10 +109,10 @@ export function CreateProject() {
 
           <Select
             label="Status"
-            value={status}
-            onChange={(value) => setStatus(String(value))}
-            options={activeStatuses.map((s) => ({ value: s.label, label: s.label }))}
-            disabled={loading || statusesLoading}
+            value={statusId}
+            onChange={(value) => setStatusId(String(value))}
+            options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
+            disabled={loading || statusesLoading || !activeStatuses.length}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>

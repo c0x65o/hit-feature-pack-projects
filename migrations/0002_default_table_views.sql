@@ -29,7 +29,7 @@ SELECT
   FALSE,
   NULL,
   '[{"id": "lastUpdatedOnTimestamp", "desc": true}]'::jsonb,
-  '{"field": "status", "sortOrder": ["Backburner", "Not Launched", "Draft", "Active", "Completed", "Cancelled", "Archived"]}'::jsonb,
+  '{"field": "statusLabel", "sortOrder": ["Backburner", "Not Launched", "Draft", "Active", "Completed", "Cancelled", "Archived"]}'::jsonb,
   NOW(),
   NOW()
 WHERE NOT EXISTS (
@@ -122,7 +122,7 @@ INSERT INTO "table_view_filters" (
 SELECT
   gen_random_uuid(),
   tv.id,
-  'status',
+  'statusLabel',
   'notEquals',
   'Archived',
   'string',
@@ -134,6 +134,6 @@ WHERE tv."table_id" = 'projects'
   AND NOT EXISTS (
     SELECT 1 FROM "table_view_filters" tvf
     WHERE tvf."view_id" = tv.id
-      AND tvf."field" = 'status'
+      AND tvf."field" = 'statusLabel'
   );
 

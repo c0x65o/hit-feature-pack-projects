@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * pageSize;
 
     // Filtering
-    const status = searchParams.get('status');
+    const statusId = searchParams.get('statusId');
     const excludeArchived = searchParams.get('excludeArchived') === 'true';
     const search = searchParams.get('search') || '';
 
@@ -129,9 +129,9 @@ export async function GET(request: NextRequest) {
 
     // Build where conditions
     const conditions = [];
-    if (status) {
-      // status param is a status ID (uuid)
-      conditions.push(eq(projects.statusId, status));
+    if (statusId) {
+      // statusId param is a status ID (uuid)
+      conditions.push(eq(projects.statusId, statusId));
     }
     if (excludeArchived) {
       // Lookup the 'Archived' status ID to exclude it
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve statusId - accept either statusId (uuid) or status (label for backwards compat)
+    // Resolve statusId (canonical)
     let resolvedStatusId: string;
     if (body.statusId) {
       const ok = await isValidProjectStatusId(db, body.statusId);
@@ -268,13 +268,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: `Invalid statusId: ${body.statusId}` }, { status: 400 });
       }
       resolvedStatusId = body.statusId;
-    } else if (body.status) {
-      // Accept label for API backwards compatibility, resolve to ID
-      const statusId = await getStatusIdByLabel(db, body.status);
-      if (!statusId) {
-        return NextResponse.json({ error: `Invalid status: ${body.status}` }, { status: 400 });
-      }
-      resolvedStatusId = statusId;
     } else {
       resolvedStatusId = await getDefaultProjectStatusId(db);
     }

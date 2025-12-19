@@ -7,7 +7,7 @@ interface UseProjectsOptions {
   page?: number;
   pageSize?: number;
   search?: string;
-  status?: string;
+  statusId?: string;
   excludeArchived?: boolean;
   sortBy?: 'name' | 'lastUpdatedOnTimestamp';
   sortOrder?: 'asc' | 'desc';
@@ -24,7 +24,7 @@ interface PaginatedResponse<T> {
 }
 
 export function useProjects(options: UseProjectsOptions = {}) {
-  const { page = 1, pageSize = 25, search = '', status, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
+  const { page = 1, pageSize = 25, search = '', statusId, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
   const [data, setData] = useState<PaginatedResponse<Project> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -39,7 +39,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         sortOrder,
       });
       if (search) params.set('search', search);
-      if (status) params.set('status', status);
+      if (statusId) params.set('statusId', statusId);
       if (excludeArchived) params.set('excludeArchived', 'true');
 
       const res = await fetch(`/api/projects?${params.toString()}`);
@@ -55,13 +55,13 @@ export function useProjects(options: UseProjectsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, status, excludeArchived, sortBy, sortOrder]);
+  }, [page, pageSize, search, statusId, excludeArchived, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const createProject = async (project: { name: string; slug?: string; description?: string; status?: string }) => {
+  const createProject = async (project: { name: string; slug?: string; description?: string; statusId?: string }) => {
     const res = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -317,40 +317,6 @@ export interface ProjectFormInfo {
   count: number;
 }
 
-export function useProjectForms(projectId: string | undefined) {
-  const [forms, setForms] = useState<ProjectFormInfo[]>([]);
-  const [loading, setLoading] = useState(Boolean(projectId));
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(async () => {
-    if (!projectId) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/forms/linked?entityKind=project&entityId=${encodeURIComponent(projectId)}`);
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error || 'Failed to fetch project forms');
-      }
-      const json = await res.json();
-      setForms(json?.items ?? []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { forms, loading, error, refresh: fetchData };
-}
-
 export interface FormEntryRecord {
   id: string;
   formId: string;
@@ -371,57 +337,5 @@ export interface PaginatedFormEntriesResponse {
     total: number;
     totalPages: number;
   };
-}
-
-export function useProjectFormEntries(
-  projectId: string | undefined,
-  formId: string | undefined,
-  options: { page?: number; pageSize?: number; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc'; entityFieldKey?: string } = {}
-) {
-  const { page = 1, pageSize = 25, search = '', sortBy = 'updatedAt', sortOrder = 'desc', entityFieldKey } = options;
-  const [data, setData] = useState<PaginatedFormEntriesResponse | null>(null);
-  const [loading, setLoading] = useState(Boolean(projectId && formId));
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(async () => {
-    if (!projectId || !formId) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(pageSize),
-        sortBy,
-        sortOrder,
-      });
-      if (search) params.set('search', search);
-      if (entityFieldKey) {
-        params.set('linkedEntityKind', 'project');
-        params.set('linkedEntityId', projectId);
-        params.set('linkedFieldKey', entityFieldKey);
-      }
-
-      const res = await fetch(`/api/forms/${formId}/entries?${params.toString()}`);
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json?.error || 'Failed to fetch form entries');
-      }
-      const json = await res.json();
-      setData(json);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, formId, page, pageSize, search, sortBy, sortOrder, entityFieldKey]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, refresh: fetchData };
 }
 
