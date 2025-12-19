@@ -43,5 +43,6 @@ export declare function useProjectStatus(id: string | undefined): {
         sortOrder: number;
         isActive: boolean;
     }) => Promise<any>;
+    deleteStatus: () => Promise<void>;
 };
 //# sourceMappingURL=useProjectStatuses.d.ts.map

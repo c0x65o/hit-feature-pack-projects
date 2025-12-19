@@ -123,6 +123,8 @@ export function ProjectStatusesSetup() {
             onRefresh={refresh}
             refreshing={loading}
             initialSorting={[{ id: 'sortOrder', desc: false }]}
+            tableId="project-statuses"
+            enableViews={true}
           />
         )}
       </Card>

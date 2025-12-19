@@ -122,5 +122,16 @@ export function useProjectStatus(id) {
         await fetchData();
         return json;
     };
-    return { status, loading, error, refresh: fetchData, updateStatus };
+    const deleteStatus = async () => {
+        if (!id)
+            throw new Error('Status ID required');
+        const res = await fetch(`/api/projects/statuses/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+        });
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json?.error || 'Failed to delete status');
+        }
+    };
+    return { status, loading, error, refresh: fetchData, updateStatus, deleteStatus };
 }

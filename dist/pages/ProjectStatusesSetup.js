@@ -71,6 +71,6 @@ export function ProjectStatusesSetup() {
             render: (_value, row) => Boolean(row.isActive) ? 'Yes' : 'No',
         },
     ], []);
-    return (_jsx(Page, { title: "Project Statuses", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Status"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: rows, loading: loading, onRowClick: handleRowClick, emptyMessage: "No statuses yet. Create your first status.", onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'sortOrder', desc: false }] })) }) }));
+    return (_jsx(Page, { title: "Project Statuses", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Status"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: rows, loading: loading, onRowClick: handleRowClick, emptyMessage: "No statuses yet. Create your first status.", onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'sortOrder', desc: false }], tableId: "project-statuses", enableViews: true })) }) }));
 }
 export default ProjectStatusesSetup;

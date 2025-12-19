@@ -1,19 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUi } from '@hit/ui-kit';
+import { useUi, useAlertDialog } from '@hit/ui-kit';
 import { useProjectStatus } from '../hooks/useProjectStatuses';
+import { Trash2 } from 'lucide-react';
 
 export function EditProjectStatus(props: { id?: string }) {
   const { Page, Card, Button, Input, Select } = useUi();
+  const alertDialog = useAlertDialog();
   const statusId = props.id;
-  const { status, loading: statusLoading, updateStatus } = useProjectStatus(statusId);
+  const { status, loading: statusLoading, updateStatus, deleteStatus } = useProjectStatus(statusId);
 
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('#64748b');
   const [sortOrder, setSortOrder] = useState('0');
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +51,29 @@ export function EditProjectStatus(props: { id?: string }) {
       setError(err instanceof Error ? err.message : 'Failed to update status');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!statusId || !status) return;
+
+    const confirmed = await alertDialog.showConfirm(
+      `Are you sure you want to delete "${status.label}"? This cannot be undone.`,
+      {
+        variant: 'error',
+        title: 'Delete Status',
+        confirmText: 'Delete',
+      }
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteStatus();
+      window.location.href = '/projects/setup/statuses';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete status');
+      setDeleting(false);
     }
   };
 
@@ -126,7 +152,7 @@ export function EditProjectStatus(props: { id?: string }) {
             onChange={setLabel}
             placeholder="e.g. Active"
             required
-            disabled={loading}
+            disabled={loading || deleting}
             maxLength={50}
           />
 
@@ -147,7 +173,7 @@ export function EditProjectStatus(props: { id?: string }) {
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                disabled={loading}
+                disabled={loading || deleting}
                 style={{
                   width: '60px',
                   height: '40px',
@@ -155,15 +181,15 @@ export function EditProjectStatus(props: { id?: string }) {
                   backgroundColor: 'var(--hit-input-bg, #ffffff)',
                   border: '1px solid var(--hit-border-default, #cbd5e1)',
                   borderRadius: '6px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.5 : 1,
+                  cursor: loading || deleting ? 'not-allowed' : 'pointer',
+                  opacity: loading || deleting ? 0.5 : 1,
                 }}
               />
               <Input
                 value={color}
                 onChange={setColor}
                 placeholder="#64748b"
-                disabled={loading}
+                disabled={loading || deleting}
                 className="flex-1"
               />
             </div>
@@ -174,7 +200,7 @@ export function EditProjectStatus(props: { id?: string }) {
             value={sortOrder}
             onChange={setSortOrder}
             placeholder="0"
-            disabled={loading}
+            disabled={loading || deleting}
             type="number"
           />
 
@@ -186,16 +212,22 @@ export function EditProjectStatus(props: { id?: string }) {
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
             ]}
-            disabled={loading}
+            disabled={loading || deleting}
           />
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
-              Cancel
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '8px' }}>
+            <Button type="button" variant="danger" onClick={handleDelete} disabled={loading || deleting}>
+              <Trash2 size={16} style={{ marginRight: '8px' }} />
+              {deleting ? 'Deleting...' : 'Delete'}
             </Button>
-            <Button type="submit" variant="primary" disabled={loading || !label.trim()}>
-              Save Changes
-            </Button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading || deleting}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={loading || deleting || !label.trim()}>
+                Save Changes
+              </Button>
+            </div>
           </div>
         </form>
       </Card>
