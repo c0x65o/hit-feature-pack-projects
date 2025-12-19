@@ -25,11 +25,11 @@ function DashboardContent() {
 
   // Handle view filter changes from DataTable
   const handleViewFiltersChange = useCallback((filters: Array<{ field: string; operator: string; value: any }>) => {
-    // Check for status filter (case-insensitive comparison)
+    // Check for status filter
     const statusFilter = filters.find((f) => f.field === 'status');
     if (statusFilter) {
-      const filterValue = String(statusFilter.value || '').toLowerCase();
-      if (statusFilter.operator === 'notEquals' && filterValue === 'archived') {
+      const filterValue = String(statusFilter.value || '');
+      if (statusFilter.operator === 'notEquals' && filterValue === 'Archived') {
         setExcludeArchived(true);
       } else {
         setExcludeArchived(false);

@@ -87,7 +87,7 @@ SELECT
   tv.id,
   'status',
   'notEquals',
-  'archived',
+  'Archived',
   'string',
   0
 FROM "table_views" tv
