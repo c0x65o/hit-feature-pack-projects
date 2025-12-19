@@ -1,27 +1,9 @@
-export declare function useProjectStatuses(): {
-    statuses: {
-        key: string;
-        label: string;
-        color: string | null;
-        sortOrder: number;
-        isDefault: boolean;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-    }[];
-    activeStatuses: {
-        key: string;
-        label: string;
-        color: string | null;
-        sortOrder: number;
-        isDefault: boolean;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-    }[];
-    defaultStatusKey: string;
-    loading: boolean;
-    error: Error | null;
-    refresh: () => Promise<void>;
-};
+/**
+ * Hook to get project statuses.
+ *
+ * If wrapped in a ProjectStatusesProvider, it will use the shared context
+ * (avoiding N+1 API calls when multiple components need statuses).
+ * Otherwise, it fetches statuses directly.
+ */
+export declare function useProjectStatuses(): import("./ProjectStatusesContext").ProjectStatusesContextValue;
 //# sourceMappingURL=useProjectStatuses.d.ts.map

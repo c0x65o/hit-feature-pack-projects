@@ -4,6 +4,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
+import { ProjectStatusesProvider } from '../hooks/ProjectStatusesContext';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { Plus } from 'lucide-react';
 
@@ -26,12 +27,12 @@ function isAdminUser(): boolean {
   }
 }
 
-export function Dashboard() {
+function DashboardContent() {
   const { Page, Card, Button, DataTable } = useUi();
   const [page, setPage] = useState(1);
   const pageSize = 25;
   
-  // Load available statuses for the status filter dropdown
+  // Load available statuses for the status filter dropdown (uses shared context)
   const { activeStatuses } = useProjectStatuses();
   
   // View state - managed by DataTable's view system when enableViews is true
@@ -186,6 +187,18 @@ export function Dashboard() {
         )}
       </Card>
     </Page>
+  );
+}
+
+/**
+ * Dashboard wrapped with ProjectStatusesProvider to share statuses data
+ * across all child components (avoiding N+1 API calls)
+ */
+export function Dashboard() {
+  return (
+    <ProjectStatusesProvider>
+      <DashboardContent />
+    </ProjectStatusesProvider>
   );
 }
 

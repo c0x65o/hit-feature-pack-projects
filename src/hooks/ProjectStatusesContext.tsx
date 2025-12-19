@@ -1,21 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { ProjectStatusRecord } from '../schema/projects';
-import { useProjectStatusesContext } from './ProjectStatusesContext';
 
-/**
- * Hook to get project statuses.
- * 
- * If wrapped in a ProjectStatusesProvider, it will use the shared context
- * (avoiding N+1 API calls when multiple components need statuses).
- * Otherwise, it fetches statuses directly.
- */
-export function useProjectStatuses() {
-  // Try to use context if available (avoids N+1 calls when wrapped in provider)
-  const contextValue = useProjectStatusesContext();
-  
-  // Local state for when context is not available
+export interface ProjectStatusesContextValue {
+  statuses: ProjectStatusRecord[];
+  activeStatuses: ProjectStatusRecord[];
+  defaultStatusKey: string;
+  loading: boolean;
+  error: Error | null;
+  refresh: () => Promise<void>;
+}
+
+const ProjectStatusesContext = createContext<ProjectStatusesContextValue | null>(null);
+
+export function ProjectStatusesProvider({ children }: { children: ReactNode }) {
   const [statuses, setStatuses] = useState<ProjectStatusRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -39,22 +38,22 @@ export function useProjectStatuses() {
   }, []);
 
   useEffect(() => {
-    // Only fetch if context is not available
-    if (!contextValue) {
-      refresh();
-    }
-  }, [refresh, contextValue]);
+    refresh();
+  }, [refresh]);
 
-  // If context is available, use it
-  if (contextValue) {
-    return contextValue;
-  }
-
-  // Otherwise return local state
   const defaultStatusKey = statuses.find((s) => s.isDefault)?.key || 'active';
   const activeStatuses = statuses.filter((s) => s.isActive);
 
-  return { statuses, activeStatuses, defaultStatusKey, loading, error, refresh };
+  return (
+    <ProjectStatusesContext.Provider
+      value={{ statuses, activeStatuses, defaultStatusKey, loading, error, refresh }}
+    >
+      {children}
+    </ProjectStatusesContext.Provider>
+  );
 }
 
+export function useProjectStatusesContext(): ProjectStatusesContextValue | null {
+  return useContext(ProjectStatusesContext);
+}
 

@@ -1,17 +1,8 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
-import { useProjectStatusesContext } from './ProjectStatusesContext';
-/**
- * Hook to get project statuses.
- *
- * If wrapped in a ProjectStatusesProvider, it will use the shared context
- * (avoiding N+1 API calls when multiple components need statuses).
- * Otherwise, it fetches statuses directly.
- */
-export function useProjectStatuses() {
-    // Try to use context if available (avoids N+1 calls when wrapped in provider)
-    const contextValue = useProjectStatusesContext();
-    // Local state for when context is not available
+import { jsx as _jsx } from "react/jsx-runtime";
+import { createContext, useContext, useCallback, useEffect, useState } from 'react';
+const ProjectStatusesContext = createContext(null);
+export function ProjectStatusesProvider({ children }) {
     const [statuses, setStatuses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,17 +26,12 @@ export function useProjectStatuses() {
         }
     }, []);
     useEffect(() => {
-        // Only fetch if context is not available
-        if (!contextValue) {
-            refresh();
-        }
-    }, [refresh, contextValue]);
-    // If context is available, use it
-    if (contextValue) {
-        return contextValue;
-    }
-    // Otherwise return local state
+        refresh();
+    }, [refresh]);
     const defaultStatusKey = statuses.find((s) => s.isDefault)?.key || 'active';
     const activeStatuses = statuses.filter((s) => s.isActive);
-    return { statuses, activeStatuses, defaultStatusKey, loading, error, refresh };
+    return (_jsx(ProjectStatusesContext.Provider, { value: { statuses, activeStatuses, defaultStatusKey, loading, error, refresh }, children: children }));
+}
+export function useProjectStatusesContext() {
+    return useContext(ProjectStatusesContext);
 }
