@@ -42,6 +42,12 @@ nav:
     weight: 100
     showWhen: authenticated
     children:
+      - id: projects-dashboards
+        label: Dashboard
+        path: /dashboards?pack=projects
+        icon: LayoutDashboard
+        weight: 0
+        showWhen: authenticated
       - id: projects-dashboard
         label: Projects
         path: /projects
