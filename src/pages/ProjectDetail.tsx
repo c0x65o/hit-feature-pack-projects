@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useUi, useAlertDialog } from '@hit/ui-kit';
 import {
   useProject,
@@ -10,7 +10,6 @@ import {
 import { LinkedEntityTabs } from '@hit/feature-pack-forms';
 import {
   ProjectStatusBadge,
-  SummaryCard,
   MilestoneInlineEditor,
   ActivityFeed,
 } from '../components';
@@ -30,9 +29,6 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
   const [newMilestoneDate, setNewMilestoneDate] = useState('');
   const [creatingMilestone, setCreatingMilestone] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  const openMilestones = useMemo(() => milestones.filter((m) => m.status !== 'completed').length, [milestones]);
-  const totalMilestones = milestones.length;
 
   const handleEdit = () => {
     if (projectId) {
@@ -188,11 +184,6 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
         entity={{ kind: 'project', id: projectId }}
         overview={
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Summary Strip - Only in Overview tab */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-              <SummaryCard title="Milestones" value={`${openMilestones} open`} subtitle={`${totalMilestones} total`} />
-            </div>
-
             {/* Overview */}
             <Card title="Overview">
               {project.description ? (
