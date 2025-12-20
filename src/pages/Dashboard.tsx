@@ -16,37 +16,21 @@ function DashboardContent() {
   // Load available statuses for the status filter dropdown (uses shared context)
   const { activeStatuses } = useProjectStatuses();
   
-  // View state - managed by DataTable's view system when enableViews is true
-  const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived (matches "Active Projects" default view)
+  // View state from table views (filters + AND/OR mode + default sorting)
+  const [viewFilters, setViewFilters] = useState<Array<{ field: string; operator: string; value: any }>>([]);
+  const [viewFilterMode, setViewFilterMode] = useState<'all' | 'any'>('all');
   const [sortConfig, setSortConfig] = useState<{ sortBy: 'name' | 'lastUpdatedOnTimestamp'; sortOrder: 'asc' | 'desc' }>({
     sortBy: 'lastUpdatedOnTimestamp',
     sortOrder: 'desc',
   });
 
-  // Handle view filter changes from DataTable
-  const handleViewFiltersChange = useCallback((filters: Array<{ field: string; operator: string; value: any }>) => {
-    // Check for status filter (canonical: statusId)
-    const statusFilter = filters.find((f) => f.field === 'statusId');
-    if (statusFilter) {
-      const filterValue = String(statusFilter.value || '');
-      const archived = activeStatuses.find((s) => s.label === 'Archived');
-      if (archived && statusFilter.operator === 'notEquals' && filterValue === archived.id) {
-        setExcludeArchived(true);
-      } else {
-        setExcludeArchived(false);
-      }
-    } else {
-      // No status filter means show all
-      setExcludeArchived(false);
-    }
-  }, [activeStatuses]);
-
   const { data, loading, error, refresh } = useProjects({
     page,
     pageSize,
-    excludeArchived,
     sortBy: sortConfig.sortBy,
     sortOrder: sortConfig.sortOrder,
+    filters: viewFilters,
+    filterMode: viewFilterMode,
   });
   
   // Build status options from loaded statuses
@@ -149,7 +133,15 @@ function DashboardContent() {
             initialSorting={[{ id: 'lastUpdatedOnTimestamp', desc: true }]}
             tableId="projects"
             enableViews={true}
-            onViewFiltersChange={handleViewFiltersChange}
+            onViewFiltersChange={setViewFilters}
+            onViewFilterModeChange={setViewFilterMode}
+            onViewSortingChange={(sorting) => {
+              const first = Array.isArray(sorting) ? sorting[0] : null;
+              const id = first?.id;
+              if (id === 'name' || id === 'lastUpdatedOnTimestamp') {
+                setSortConfig({ sortBy: id, sortOrder: first?.desc ? 'desc' : 'asc' });
+              }
+            }}
           />
         )}
       </Card>

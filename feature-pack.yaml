@@ -175,6 +175,8 @@ metrics:
     - key: fp.projects.project_count
       label: Project Count
       unit: count
+      icon: FolderKanban
+      icon_color: "#3b82f6"
       rollup_strategy: last
       entity_kinds: [project]
       time_kind: realtime

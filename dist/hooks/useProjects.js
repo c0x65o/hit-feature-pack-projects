@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 export function useProjects(options = {}) {
-    const { page = 1, pageSize = 25, search = '', statusId, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
+    const { page = 1, pageSize = 25, search = '', statusId, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc', filters, filterMode = 'all' } = options;
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -20,6 +20,10 @@ export function useProjects(options = {}) {
                 params.set('statusId', statusId);
             if (excludeArchived)
                 params.set('excludeArchived', 'true');
+            if (filters && Array.isArray(filters) && filters.length > 0) {
+                params.set('filters', JSON.stringify(filters));
+                params.set('filterMode', filterMode);
+            }
             const res = await fetch(`/api/projects?${params.toString()}`);
             if (!res.ok) {
                 const json = await res.json().catch(() => ({}));
@@ -35,7 +39,7 @@ export function useProjects(options = {}) {
         finally {
             setLoading(false);
         }
-    }, [page, pageSize, search, statusId, excludeArchived, sortBy, sortOrder]);
+    }, [page, pageSize, search, statusId, excludeArchived, sortBy, sortOrder, filters, filterMode]);
     useEffect(() => {
         fetchData();
     }, [fetchData]);

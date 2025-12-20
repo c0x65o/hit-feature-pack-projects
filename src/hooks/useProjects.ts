@@ -11,6 +11,10 @@ interface UseProjectsOptions {
   excludeArchived?: boolean;
   sortBy?: 'name' | 'lastUpdatedOnTimestamp';
   sortOrder?: 'asc' | 'desc';
+  /** Advanced view filters (used by table views) */
+  filters?: Array<{ field: string; operator: string; value: any }>;
+  /** How to combine filters: 'all' (AND) or 'any' (OR). Defaults to 'all'. */
+  filterMode?: 'all' | 'any';
 }
 
 interface PaginatedResponse<T> {
@@ -24,7 +28,7 @@ interface PaginatedResponse<T> {
 }
 
 export function useProjects(options: UseProjectsOptions = {}) {
-  const { page = 1, pageSize = 25, search = '', statusId, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc' } = options;
+  const { page = 1, pageSize = 25, search = '', statusId, excludeArchived, sortBy = 'lastUpdatedOnTimestamp', sortOrder = 'desc', filters, filterMode = 'all' } = options;
   const [data, setData] = useState<PaginatedResponse<Project> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -41,6 +45,10 @@ export function useProjects(options: UseProjectsOptions = {}) {
       if (search) params.set('search', search);
       if (statusId) params.set('statusId', statusId);
       if (excludeArchived) params.set('excludeArchived', 'true');
+      if (filters && Array.isArray(filters) && filters.length > 0) {
+        params.set('filters', JSON.stringify(filters));
+        params.set('filterMode', filterMode);
+      }
 
       const res = await fetch(`/api/projects?${params.toString()}`);
       if (!res.ok) {
@@ -55,7 +63,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, statusId, excludeArchived, sortBy, sortOrder]);
+  }, [page, pageSize, search, statusId, excludeArchived, sortBy, sortOrder, filters, filterMode]);
 
   useEffect(() => {
     fetchData();

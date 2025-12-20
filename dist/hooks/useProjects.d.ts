@@ -7,6 +7,14 @@ interface UseProjectsOptions {
     excludeArchived?: boolean;
     sortBy?: 'name' | 'lastUpdatedOnTimestamp';
     sortOrder?: 'asc' | 'desc';
+    /** Advanced view filters (used by table views) */
+    filters?: Array<{
+        field: string;
+        operator: string;
+        value: any;
+    }>;
+    /** How to combine filters: 'all' (AND) or 'any' (OR). Defaults to 'all'. */
+    filterMode?: 'all' | 'any';
 }
 interface PaginatedResponse<T> {
     data: T[];

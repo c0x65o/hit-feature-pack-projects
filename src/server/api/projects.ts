@@ -122,6 +122,9 @@ export async function GET(request: NextRequest) {
     const statusId = searchParams.get('statusId');
     const excludeArchived = searchParams.get('excludeArchived') === 'true';
     const search = searchParams.get('search') || '';
+    const filtersRaw = searchParams.get('filters');
+    const filterModeRaw = searchParams.get('filterMode');
+    const filterMode: 'all' | 'any' = filterModeRaw === 'any' ? 'any' : 'all';
 
     // Sorting
     const sortBy = searchParams.get('sortBy') || 'createdOnTimestamp';
@@ -148,6 +151,57 @@ export async function GET(request: NextRequest) {
           like(projects.slug, `%${search}%`)
         )!
       );
+    }
+
+    // Advanced view filters (used by table views)
+    const viewFilterConditions: any[] = [];
+    if (filtersRaw) {
+      try {
+        const parsed = JSON.parse(filtersRaw);
+        const filters = Array.isArray(parsed) ? parsed : [];
+
+        for (const f of filters) {
+          const field = String((f as any)?.field || '');
+          const operator = String((f as any)?.operator || '');
+          const value = (f as any)?.value;
+
+          if (!field || !operator) continue;
+
+          // Supported fields: name, statusId, lastUpdatedOnTimestamp
+          if (field === 'name') {
+            const v = value === null || value === undefined ? '' : String(value);
+            if (operator === 'isNull') viewFilterConditions.push(sql`${projects.name} is null`);
+            else if (operator === 'isNotNull') viewFilterConditions.push(sql`${projects.name} is not null`);
+            else if (operator === 'equals') viewFilterConditions.push(eq(projects.name, v));
+            else if (operator === 'notEquals') viewFilterConditions.push(sql`${projects.name} != ${v}`);
+            else if (operator === 'contains') viewFilterConditions.push(like(projects.name, `%${v}%`));
+            else if (operator === 'notContains') viewFilterConditions.push(sql`NOT (${projects.name} LIKE ${`%${v}%`})`);
+            else if (operator === 'startsWith') viewFilterConditions.push(like(projects.name, `${v}%`));
+            else if (operator === 'endsWith') viewFilterConditions.push(like(projects.name, `%${v}`));
+          } else if (field === 'statusId') {
+            const v = value === null || value === undefined ? '' : String(value);
+            if (operator === 'isNull') viewFilterConditions.push(sql`${projects.statusId} is null`);
+            else if (operator === 'isNotNull') viewFilterConditions.push(sql`${projects.statusId} is not null`);
+            else if (operator === 'equals' && v) viewFilterConditions.push(eq(projects.statusId, v));
+            else if (operator === 'notEquals' && v) viewFilterConditions.push(sql`${projects.statusId} != ${v}`);
+          } else if (field === 'lastUpdatedOnTimestamp') {
+            // Expect yyyy-mm-dd from the UI for date filters
+            const v = value === null || value === undefined ? '' : String(value);
+            if (!v) continue;
+            if (operator === 'dateEquals') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date = ${v}`);
+            else if (operator === 'dateBefore') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date < ${v}`);
+            else if (operator === 'dateAfter') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date > ${v}`);
+            else if (operator === 'isNull') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp} is null`);
+            else if (operator === 'isNotNull') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp} is not null`);
+          }
+        }
+      } catch {
+        // Ignore bad filters payloads
+      }
+    }
+
+    if (viewFilterConditions.length > 0) {
+      conditions.push(filterMode === 'any' ? or(...viewFilterConditions) : and(...viewFilterConditions));
     }
 
     // Apply sorting

@@ -1,6 +1,6 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useUi } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
@@ -13,37 +13,20 @@ function DashboardContent() {
     const pageSize = 25;
     // Load available statuses for the status filter dropdown (uses shared context)
     const { activeStatuses } = useProjectStatuses();
-    // View state - managed by DataTable's view system when enableViews is true
-    const [excludeArchived, setExcludeArchived] = useState(true); // Default: hide archived (matches "Active Projects" default view)
+    // View state from table views (filters + AND/OR mode + default sorting)
+    const [viewFilters, setViewFilters] = useState([]);
+    const [viewFilterMode, setViewFilterMode] = useState('all');
     const [sortConfig, setSortConfig] = useState({
         sortBy: 'lastUpdatedOnTimestamp',
         sortOrder: 'desc',
     });
-    // Handle view filter changes from DataTable
-    const handleViewFiltersChange = useCallback((filters) => {
-        // Check for status filter (canonical: statusId)
-        const statusFilter = filters.find((f) => f.field === 'statusId');
-        if (statusFilter) {
-            const filterValue = String(statusFilter.value || '');
-            const archived = activeStatuses.find((s) => s.label === 'Archived');
-            if (archived && statusFilter.operator === 'notEquals' && filterValue === archived.id) {
-                setExcludeArchived(true);
-            }
-            else {
-                setExcludeArchived(false);
-            }
-        }
-        else {
-            // No status filter means show all
-            setExcludeArchived(false);
-        }
-    }, [activeStatuses]);
     const { data, loading, error, refresh } = useProjects({
         page,
         pageSize,
-        excludeArchived,
         sortBy: sortConfig.sortBy,
         sortOrder: sortConfig.sortOrder,
+        filters: viewFilters,
+        filterMode: viewFilterMode,
     });
     // Build status options from loaded statuses
     const statusOptions = useMemo(() => {
@@ -99,7 +82,13 @@ function DashboardContent() {
     ], [statusOptions, handleRowClick]);
     const projects = data?.data || [];
     const pagination = data?.pagination;
-    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track milestones, linked systems, and activity.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: handleViewFiltersChange })) }) }));
+    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track milestones, linked systems, and activity.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: setViewFilters, onViewFilterModeChange: setViewFilterMode, onViewSortingChange: (sorting) => {
+                    const first = Array.isArray(sorting) ? sorting[0] : null;
+                    const id = first?.id;
+                    if (id === 'name' || id === 'lastUpdatedOnTimestamp') {
+                        setSortConfig({ sortBy: id, sortOrder: first?.desc ? 'desc' : 'asc' });
+                    }
+                } })) }) }));
 }
 /**
  * Dashboard wrapped with ProjectStatusesProvider to share statuses data
