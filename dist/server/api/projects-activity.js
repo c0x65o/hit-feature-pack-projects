@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { projectActivity, projects, projectActivityTypes } from '@/lib/feature-pack-schemas';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { eq, desc, and, sql, gte, lte } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
 import { requireProjectPermission } from '../lib/access';
 export const dynamic = 'force-dynamic';
@@ -42,6 +42,8 @@ export async function GET(request) {
         const offset = (page - 1) * pageSize;
         // Optional filtering
         const activityType = searchParams.get('activityType');
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
         // Verify project exists
         const [project] = await db
             .select()
@@ -55,6 +57,20 @@ export async function GET(request) {
         const conditions = [eq(projectActivity.projectId, projectId)];
         if (activityType) {
             conditions.push(eq(projectActivity.activityType, activityType));
+        }
+        if (from) {
+            const d = new Date(from);
+            if (!Number.isFinite(d.getTime())) {
+                return NextResponse.json({ error: 'Invalid from date' }, { status: 400 });
+            }
+            conditions.push(gte(projectActivity.occurredAt, d));
+        }
+        if (to) {
+            const d = new Date(to);
+            if (!Number.isFinite(d.getTime())) {
+                return NextResponse.json({ error: 'Invalid to date' }, { status: 400 });
+            }
+            conditions.push(lte(projectActivity.occurredAt, d));
         }
         const whereClause = and(...conditions);
         // Get activities with activity type joins

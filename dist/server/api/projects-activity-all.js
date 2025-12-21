@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { projectActivity, projects, projectActivityTypes } from '@/lib/feature-pack-schemas';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -21,6 +21,8 @@ export async function GET(request) {
         // Optional filtering
         const projectId = searchParams.get('projectId');
         const typeId = searchParams.get('typeId');
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
         // Build query conditions
         const conditions = [];
         if (projectId) {
@@ -28,6 +30,20 @@ export async function GET(request) {
         }
         if (typeId) {
             conditions.push(eq(projectActivity.typeId, typeId));
+        }
+        if (from) {
+            const d = new Date(from);
+            if (!Number.isFinite(d.getTime())) {
+                return NextResponse.json({ error: 'Invalid from date' }, { status: 400 });
+            }
+            conditions.push(gte(projectActivity.occurredAt, d));
+        }
+        if (to) {
+            const d = new Date(to);
+            if (!Number.isFinite(d.getTime())) {
+                return NextResponse.json({ error: 'Invalid to date' }, { status: 400 });
+            }
+            conditions.push(lte(projectActivity.occurredAt, d));
         }
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
         // Get activities with activity type and project joins
