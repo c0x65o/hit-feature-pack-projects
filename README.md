@@ -1,6 +1,6 @@
 # @hit/feature-pack-projects
 
-Projects feature pack - execution containers with teams, milestones, links, and activity log
+Projects feature pack - execution containers with teams, activity types, links, and activity log
 
 ## Installation
 
@@ -26,9 +26,9 @@ npm run build
 
 - **Projects CRUD**: Create, read, update, and archive projects
 - **Group-based Access**: Grant Auth groups roles (owner, manager, contributor, viewer) on projects (no per-project user member management)
-- **Milestones**: Track project milestones with target dates and status
+- **Activity Types**: Define custom activity types for categorizing project activities
 - **Generic Links**: Link projects to other entities (CRM accounts, marketing plans, metrics data sources, etc.)
-- **Activity Log**: Complete audit trail of all project changes
+- **Activity Log**: Complete audit trail of all project changes and user-created activities
 - **Permission System**: Role-based access control with project-level permissions
 - **Policy System**: Configurable read access (all authenticated vs groups only)
 
@@ -38,11 +38,11 @@ npm run build
 - `GET/PUT/DELETE /api/projects/[id]` - Get, update, or archive a project
 - `GET/POST /api/projects/[projectId]/groups` - List or grant project group roles
 - `GET/PUT/DELETE /api/projects/[projectId]/groups/[groupId]` - Manage project group roles
-- `GET/POST /api/projects/[projectId]/milestones` - List or create milestones
-- `GET/PUT/DELETE /api/projects/[projectId]/milestones/[milestoneId]` - Manage milestones
+- `GET/POST /api/projects/activity-types` - List or create activity types (admin)
+- `GET/PUT/DELETE /api/projects/activity-types/[id]` - Manage activity types (admin)
 - `GET/POST /api/projects/[projectId]/links` - List or create project links
 - `GET/PUT/DELETE /api/projects/[projectId]/links/[linkId]` - Manage project links
-- `GET /api/projects/[projectId]/activity` - View project activity log
+- `GET/POST /api/projects/[projectId]/activity` - View or create project activity log
 
 ## Configuration
 

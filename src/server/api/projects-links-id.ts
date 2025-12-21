@@ -5,7 +5,7 @@ import {
   projectLinks,
   projects,
   projectActivity,
-  ACTIVITY_TYPES,
+  SYSTEM_ACTIVITY_TYPES,
 } from '@/lib/feature-pack-schemas';
 import { eq, and } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
@@ -35,7 +35,7 @@ function extractIds(request: NextRequest): { projectId: string | null; linkId: s
 async function logActivity(
   db: ReturnType<typeof getDb>,
   projectId: string,
-  activityType: (typeof ACTIVITY_TYPES)[number],
+  activityType: (typeof SYSTEM_ACTIVITY_TYPES)[number],
   userId: string,
   description: string,
   metadata?: Record<string, unknown>

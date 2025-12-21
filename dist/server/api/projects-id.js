@@ -243,7 +243,7 @@ export async function DELETE(request) {
         if (!existing) {
             return NextResponse.json({ error: 'Project not found' }, { status: 404 });
         }
-        // Hard delete - cascade will handle related records (milestones, links, activity, notes)
+        // Hard delete - cascade will handle related records (links, activity, notes)
         await db
             .delete(projects)
             .where(eq(projects.id, id));

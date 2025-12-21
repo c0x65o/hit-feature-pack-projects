@@ -6,7 +6,7 @@
  *
  * Core entities:
  * - projects: Main project records
- * - project_milestones: Project milestones/goals
+ * - project_activity_types: Activity type definitions (setup-controlled)
  * - project_links: Generic links to other entities (no cross-pack FKs)
  * - project_activity: Audit trail for project changes
  *
@@ -28,6 +28,7 @@ import {
   unique,
   boolean,
   integer,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { relations, type InferSelectModel, type InferInsertModel } from 'drizzle-orm';
 
@@ -85,31 +86,30 @@ export const projectStatuses = pgTable(
 );
 
 /**
- * Project Milestones Table
- * Stores project milestones/goals with target dates
+ * Project Activity Types Table (setup-controlled)
+ * Defines activity types that can be used when creating activities
+ * Similar to marketing activity types, but for projects
  */
-export const projectMilestones = pgTable(
-  'project_milestones',
+export const projectActivityTypes = pgTable(
+  'project_activity_types',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    projectId: uuid('project_id')
-      .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    name: varchar('name', { length: 255 }).notNull(),
+    key: varchar('key', { length: 100 }).notNull(), // e.g., "game_launch", "sale", "update"
+    name: varchar('name', { length: 255 }).notNull(), // Display label
+    category: varchar('category', { length: 50 }), // project, release, ops, content, other
     description: text('description'),
-    targetDate: timestamp('target_date'),
-    completedDate: timestamp('completed_date'),
-    status: varchar('status', { length: 50 }).default('planned').notNull(), // planned, in_progress, completed, cancelled
-    // Audit fields
-    createdByUserId: varchar('created_by_user_id', { length: 255 }).notNull(),
-    createdOnTimestamp: timestamp('created_on_timestamp').defaultNow().notNull(),
-    lastUpdatedByUserId: varchar('last_updated_by_user_id', { length: 255 }),
-    lastUpdatedOnTimestamp: timestamp('last_updated_on_timestamp').defaultNow().notNull(),
+    color: varchar('color', { length: 50 }), // Badge/timeline color
+    icon: varchar('icon', { length: 100 }), // Icon name (lucide)
+    sortOrder: integer('sort_order').default(0).notNull(),
+    isSystem: boolean('is_system').notNull().default(false), // Prevent deleting seeded types
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
-    projectIdx: index('project_milestones_project_idx').on(table.projectId),
-    statusIdx: index('project_milestones_status_idx').on(table.status),
-    targetDateIdx: index('project_milestones_target_date_idx').on(table.targetDate),
+    keyIdx: unique('project_activity_types_key_unique').on(table.key),
+    sortIdx: index('project_activity_types_sort_idx').on(table.sortOrder),
+    activeIdx: index('project_activity_types_active_idx').on(table.isActive),
   })
 );
 
@@ -150,9 +150,7 @@ export const projectLinks = pgTable(
 /**
  * Project Activity Table
  * Audit trail for project changes and events
- * Records: project.created, project.updated, project.status_changed,
- *          project.link_added, project.link_removed,
- *          project.milestone_created, project.milestone_updated
+ * Can be system-generated (project.created, project.updated, etc.) or user-created with activity types
  */
 export const projectActivity = pgTable(
   'project_activity',
@@ -161,16 +159,22 @@ export const projectActivity = pgTable(
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
-    activityType: varchar('activity_type', { length: 100 }).notNull(), // project.created, project.updated, etc.
+    typeId: uuid('type_id').references(() => projectActivityTypes.id, { onDelete: 'set null' }), // Reference to activity type (null for system activities)
+    activityType: varchar('activity_type', { length: 100 }), // System activity type (project.created, project.updated, etc.) - null if typeId is set
+    title: varchar('title', { length: 500 }), // User-provided title (for user-created activities)
     userId: varchar('user_id', { length: 255 }).notNull(), // User who performed the action
     description: text('description'), // Human-readable description
+    link: varchar('link', { length: 500 }), // Optional link URL
+    occurredAt: timestamp('occurred_at').defaultNow().notNull(), // When the activity occurred
     metadata: jsonb('metadata'), // Additional context (before/after values, etc.)
-    createdAt: timestamp('created_at').defaultNow().notNull(), // When the activity occurred
+    createdAt: timestamp('created_at').defaultNow().notNull(), // When the activity record was created
   },
   (table) => ({
     projectIdx: index('project_activity_project_idx').on(table.projectId),
+    typeIdx: index('project_activity_type_idx').on(table.typeId),
     activityTypeIdx: index('project_activity_activity_type_idx').on(table.activityType),
     userIdx: index('project_activity_user_idx').on(table.userId),
+    occurredAtIdx: index('project_activity_occurred_at_idx').on(table.occurredAt),
     createdAtIdx: index('project_activity_created_at_idx').on(table.createdAt),
   })
 );
@@ -208,7 +212,6 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     fields: [projects.statusId],
     references: [projectStatuses.id],
   }),
-  milestones: many(projectMilestones),
   links: many(projectLinks),
   activity: many(projectActivity),
   notes: many(projectNotes),
@@ -218,11 +221,8 @@ export const projectStatusesRelations = relations(projectStatuses, ({ many }) =>
   projects: many(projects),
 }));
 
-export const projectMilestonesRelations = relations(projectMilestones, ({ one }) => ({
-  project: one(projects, {
-    fields: [projectMilestones.projectId],
-    references: [projects.id],
-  }),
+export const projectActivityTypesRelations = relations(projectActivityTypes, ({ many }) => ({
+  activities: many(projectActivity),
 }));
 
 export const projectLinksRelations = relations(projectLinks, ({ one }) => ({
@@ -236,6 +236,10 @@ export const projectActivityRelations = relations(projectActivity, ({ one }) => 
   project: one(projects, {
     fields: [projectActivity.projectId],
     references: [projects.id],
+  }),
+  activityType: one(projectActivityTypes, {
+    fields: [projectActivity.typeId],
+    references: [projectActivityTypes.id],
   }),
 }));
 
@@ -252,14 +256,14 @@ export const projectNotesRelations = relations(projectNotes, ({ one }) => ({
 
 export type Project = InferSelectModel<typeof projects>;
 export type ProjectStatusRecord = InferSelectModel<typeof projectStatuses>;
-export type ProjectMilestone = InferSelectModel<typeof projectMilestones>;
+export type ProjectActivityType = InferSelectModel<typeof projectActivityTypes>;
 export type ProjectLink = InferSelectModel<typeof projectLinks>;
 export type ProjectActivity = InferSelectModel<typeof projectActivity>;
 export type ProjectNote = InferSelectModel<typeof projectNotes>;
 
 export type InsertProject = InferInsertModel<typeof projects>;
 export type InsertProjectStatus = InferInsertModel<typeof projectStatuses>;
-export type InsertProjectMilestone = InferInsertModel<typeof projectMilestones>;
+export type InsertProjectActivityType = InferInsertModel<typeof projectActivityTypes>;
 export type InsertProjectLink = InferInsertModel<typeof projectLinks>;
 export type InsertProjectActivity = InferInsertModel<typeof projectActivity>;
 export type InsertProjectNote = InferInsertModel<typeof projectNotes>;
@@ -281,19 +285,16 @@ export type ProjectStatus = string;
 export const DEFAULT_PROJECT_STATUS_LABELS = ['Draft', 'Active', 'Completed', 'Cancelled', 'Archived'] as const;
 export type DefaultProjectStatusLabel = (typeof DEFAULT_PROJECT_STATUS_LABELS)[number];
 
-export const MILESTONE_STATUSES = ['planned', 'in_progress', 'completed', 'cancelled'] as const;
-export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
-
-export const ACTIVITY_TYPES = [
+/**
+ * System activity types (for automatic logging)
+ * These are used when activities are created automatically by the system
+ */
+export const SYSTEM_ACTIVITY_TYPES = [
   'project.created',
   'project.updated',
   'project.status_changed',
   'project.link_added',
   'project.link_removed',
   'project.link_updated',
-  'project.milestone_created',
-  'project.milestone_updated',
-  'project.milestone_completed',
-  'project.milestone_deleted',
 ] as const;
-export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+export type SystemActivityType = (typeof SYSTEM_ACTIVITY_TYPES)[number];

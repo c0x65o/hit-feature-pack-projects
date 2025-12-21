@@ -1,8 +1,8 @@
 # Feature Pack: projects
-# Domain-agnostic Projects feature pack - execution containers with teams, milestones, links, and activity log
+# Domain-agnostic Projects feature pack - execution containers with teams, activity types, links, and activity log
 
 name: projects
-description: Projects feature pack - execution containers with teams, milestones, links, and activity log
+description: Projects feature pack - execution containers with teams, activity types, links, and activity log
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ROUTES - Frontend page routes
@@ -20,6 +20,9 @@ routes:
   - path: /projects/[id]/edit
     page: EditProject
     roles: []
+  - path: /projects/timeline
+    page: Timeline
+    roles: []
   - path: /projects/setup/statuses
     page: ProjectStatusesSetup
     roles: [admin]
@@ -28,6 +31,15 @@ routes:
     roles: [admin]
   - path: /projects/setup/statuses/[id]
     page: EditProjectStatus
+    roles: [admin]
+  - path: /projects/setup/activity-types
+    page: ProjectActivityTypesSetup
+    roles: [admin]
+  - path: /projects/setup/activity-types/new
+    page: CreateProjectActivityType
+    roles: [admin]
+  - path: /projects/setup/activity-types/[id]
+    page: EditProjectActivityType
     roles: [admin]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +66,12 @@ nav:
         icon: FolderKanban
         weight: 100
         showWhen: authenticated
+      - id: projects-timeline
+        label: Timeline
+        path: /projects/timeline
+        icon: Clock
+        weight: 200
+        showWhen: authenticated
       - id: projects-setup
         label: Setup
         path: ""
@@ -69,6 +87,13 @@ nav:
             weight: 100
             showWhen: authenticated
             roles: [admin]
+          - id: projects-setup-activity-types
+            label: Activity Types
+            path: /projects/setup/activity-types
+            icon: List
+            weight: 200
+            showWhen: authenticated
+            roles: [admin]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SCHEMA - Drizzle ORM table definitions
@@ -78,29 +103,27 @@ schema:
   exports:
     - projects
     - projectStatuses
-    - projectMilestones
+    - projectActivityTypes
     - projectLinks
     - projectActivity
     - projectNotes
     - Project
     - ProjectStatusRecord
-    - ProjectMilestone
+    - ProjectActivityType
     - ProjectLink
     - ProjectActivity
     - ProjectNote
     - InsertProject
     - InsertProjectStatus
-    - InsertProjectMilestone
+    - InsertProjectActivityType
     - InsertProjectLink
     - InsertProjectActivity
     - InsertProjectNote
-    - DEFAULT_PROJECT_STATUS_KEYS
-    - MILESTONE_STATUSES
-    - ACTIVITY_TYPES
+    - DEFAULT_PROJECT_STATUS_LABELS
+    - SYSTEM_ACTIVITY_TYPES
     - ProjectStatus
-    - DefaultProjectStatusKey
-    - MilestoneStatus
-    - ActivityType
+    - DefaultProjectStatusLabel
+    - SystemActivityType
 
 # ─────────────────────────────────────────────────────────────────────────────
 # API ROUTES - Backend endpoints
@@ -116,15 +139,15 @@ api:
       methods: [GET, PUT, DELETE]
       handler: "@hit/feature-pack-projects/server/api/projects-id"
       description: "Get, update, or delete a specific project"
-    # Project Milestones
-    - path: /api/projects/[projectId]/milestones
+    # Project Activity Types (setup-controlled)
+    - path: /api/projects/activity-types
       methods: [GET, POST]
-      handler: "@hit/feature-pack-projects/server/api/projects-milestones"
-      description: "List project milestones (GET) or create milestone (POST)"
-    - path: /api/projects/[projectId]/milestones/[milestoneId]
+      handler: "@hit/feature-pack-projects/server/api/projects-activity-types"
+      description: "List activity types (GET) or create activity type (POST) [admin]"
+    - path: /api/projects/activity-types/[id]
       methods: [GET, PUT, DELETE]
-      handler: "@hit/feature-pack-projects/server/api/projects-milestones-id"
-      description: "Get, update, or delete a project milestone"
+      handler: "@hit/feature-pack-projects/server/api/projects-activity-types-id"
+      description: "Get, update, or delete an activity type [admin]"
     # Project Links
     - path: /api/projects/[projectId]/links
       methods: [GET, POST]
@@ -134,11 +157,15 @@ api:
       methods: [GET, PUT, DELETE]
       handler: "@hit/feature-pack-projects/server/api/projects-links-id"
       description: "Get, update, or remove a project link"
-    # Project Activity (read-only)
+    # Project Activity
     - path: /api/projects/[projectId]/activity
-      methods: [GET]
+      methods: [GET, POST]
       handler: "@hit/feature-pack-projects/server/api/projects-activity"
-      description: "List project activity log (read-only)"
+      description: "List project activity log (GET) or create activity (POST)"
+    - path: /api/projects/activity/all
+      methods: [GET]
+      handler: "@hit/feature-pack-projects/server/api/projects-activity-all"
+      description: "List all activities across all projects (for timeline view)"
     # Project Statuses (setup-controlled)
     - path: /api/projects/statuses
       methods: [GET, POST]

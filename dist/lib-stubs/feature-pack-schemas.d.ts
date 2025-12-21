@@ -5,7 +5,7 @@
  * At runtime, the consuming application provides the actual implementation
  * via the generated lib/feature-pack-schemas.ts file.
  */
-export { projects, projectStatuses, projectMilestones, projectLinks, projectActivity, projectNotes, Project, ProjectStatusRecord, ProjectMilestone, ProjectLink, ProjectActivity, ProjectNote, InsertProject, InsertProjectStatus, InsertProjectMilestone, InsertProjectLink, InsertProjectActivity, InsertProjectNote, DEFAULT_PROJECT_STATUS_LABELS, MILESTONE_STATUSES, ACTIVITY_TYPES, type ProjectStatus, type DefaultProjectStatusLabel, type MilestoneStatus, type ActivityType, } from '../schema/projects';
+export { projects, projectStatuses, projectActivityTypes, projectLinks, projectActivity, projectNotes, Project, ProjectStatusRecord, ProjectActivityType, ProjectLink, ProjectActivity, ProjectNote, InsertProject, InsertProjectStatus, InsertProjectActivityType, InsertProjectLink, InsertProjectActivity, InsertProjectNote, DEFAULT_PROJECT_STATUS_LABELS, SYSTEM_ACTIVITY_TYPES, type ProjectStatus, type DefaultProjectStatusLabel, type SystemActivityType, } from '../schema/projects';
 export declare const forms: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "forms";
     schema: undefined;

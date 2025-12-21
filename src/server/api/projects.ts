@@ -5,7 +5,7 @@ import {
   projects,
   projectStatuses,
   projectActivity,
-  ACTIVITY_TYPES,
+  SYSTEM_ACTIVITY_TYPES,
   type Project,
 } from '@/lib/feature-pack-schemas';
 import { eq, desc, asc, like, sql, and, or, type AnyColumn } from 'drizzle-orm';
@@ -52,7 +52,7 @@ function generateSlug(name: string): string {
 async function logActivity(
   db: ReturnType<typeof getDb>,
   projectId: string,
-  activityType: (typeof ACTIVITY_TYPES)[number],
+  activityType: (typeof SYSTEM_ACTIVITY_TYPES)[number],
   userId: string,
   description: string,
   metadata?: Record<string, unknown>

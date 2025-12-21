@@ -1,4 +1,4 @@
-import type { Project, ProjectMilestone } from '../schema/projects';
+import type { Project } from '../schema/projects';
 interface UseProjectsOptions {
     page?: number;
     pageSize?: number;
@@ -67,31 +67,24 @@ export declare function useProject(id: string | undefined): {
     error: Error | null;
     refresh: () => Promise<void>;
 };
-export declare function useProjectMilestones(projectId: string | undefined): {
-    milestones: {
+export declare function useProjectActivityTypes(): {
+    activityTypes: {
         id: string;
         name: string;
         description: string | null;
-        createdByUserId: string;
-        createdOnTimestamp: Date;
-        lastUpdatedByUserId: string | null;
-        lastUpdatedOnTimestamp: Date;
-        projectId: string;
-        targetDate: Date | null;
-        completedDate: Date | null;
-        status: string;
+        color: string | null;
+        sortOrder: number;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        key: string;
+        category: string | null;
+        icon: string | null;
+        isSystem: boolean;
     }[];
     loading: boolean;
     error: Error | null;
     refresh: () => Promise<void>;
-    createMilestone: (milestone: {
-        name: string;
-        description?: string;
-        targetDate?: string;
-        status?: string;
-    }) => Promise<void>;
-    updateMilestone: (milestoneId: string, milestone: Partial<ProjectMilestone>) => Promise<void>;
-    deleteMilestone: (milestoneId: string) => Promise<void>;
 };
 export declare function useProjectLinks(projectId: string | undefined): {
     links: {
@@ -122,12 +115,23 @@ export declare function useProjectActivity(projectId: string | undefined, filter
         createdAt: Date;
         projectId: string;
         metadata: unknown;
-        activityType: string;
+        typeId: string | null;
+        activityType: string | null;
+        title: string | null;
         userId: string;
+        link: string | null;
+        occurredAt: Date;
     }[];
     loading: boolean;
     error: Error | null;
     refresh: () => Promise<void>;
+    createActivity: (activity: {
+        typeId: string;
+        title: string;
+        description?: string;
+        link?: string;
+        occurredAt?: string;
+    }) => Promise<any>;
 };
 export interface ProjectFormInfo {
     formId: string;

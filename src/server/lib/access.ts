@@ -4,7 +4,6 @@ export type ProjectPermission =
   | 'project.read'
   | 'project.update'
   | 'project.archive'
-  | 'milestones.manage'
   | 'links.manage';
 
 export function isAdmin(user: User): boolean {

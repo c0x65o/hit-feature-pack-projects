@@ -1,7 +1,7 @@
 // src/server/api/projects-id.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { projects, projectStatuses, projectActivity, ACTIVITY_TYPES } from '@/lib/feature-pack-schemas';
+import { projects, projectStatuses, projectActivity, SYSTEM_ACTIVITY_TYPES } from '@/lib/feature-pack-schemas';
 import { eq, and } from 'drizzle-orm';
 import { extractUserFromRequest } from '../auth';
 import { requireProjectPermission } from '../lib/access';
@@ -44,7 +44,7 @@ function extractId(request: NextRequest): string | null {
 async function logActivity(
   db: ReturnType<typeof getDb>,
   projectId: string,
-  activityType: (typeof ACTIVITY_TYPES)[number],
+  activityType: (typeof SYSTEM_ACTIVITY_TYPES)[number],
   userId: string,
   description: string,
   metadata?: Record<string, unknown>
@@ -311,7 +311,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Hard delete - cascade will handle related records (milestones, links, activity, notes)
+    // Hard delete - cascade will handle related records (links, activity, notes)
     await db
       .delete(projects)
       .where(eq(projects.id, id));

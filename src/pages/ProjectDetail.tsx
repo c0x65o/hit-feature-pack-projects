@@ -4,30 +4,31 @@ import React, { useState } from 'react';
 import { useUi, useAlertDialog } from '@hit/ui-kit';
 import {
   useProject,
-  useProjectMilestones,
   useProjectActivity,
+  useProjectActivityTypes,
 } from '../hooks/useProjects';
 import { LinkedEntityTabs } from '@hit/feature-pack-forms';
 import {
   ProjectStatusBadge,
-  MilestoneInlineEditor,
   ActivityFeed,
 } from '../components';
-import { Edit, Archive, MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 
 export function ProjectDetail(props: { id: string; onNavigate?: (path: string) => void }) {
-  const { Page, Card, Button, Input, AlertDialog } = useUi();
+  const { Page, Card, Button, Input, AlertDialog, Modal, TextArea } = useUi();
   const alertDialog = useAlertDialog();
   const projectId = props.id;
   const { project, loading: projectLoading, refresh: refreshProject } = useProject(projectId);
-  const { milestones, loading: milestonesLoading, createMilestone, updateMilestone, deleteMilestone } =
-    useProjectMilestones(projectId);
+  const { activityTypes } = useProjectActivityTypes();
   const [activityFilter, setActivityFilter] = useState('');
-  const { activity, loading: activityLoading } = useProjectActivity(projectId, activityFilter);
-  const [addingMilestone, setAddingMilestone] = useState(false);
-  const [newMilestoneName, setNewMilestoneName] = useState('');
-  const [newMilestoneDate, setNewMilestoneDate] = useState('');
-  const [creatingMilestone, setCreatingMilestone] = useState(false);
+  const { activity, loading: activityLoading, createActivity } = useProjectActivity(projectId, activityFilter);
+  const [showAddActivityModal, setShowAddActivityModal] = useState(false);
+  const [formTypeId, setFormTypeId] = useState('');
+  const [formTitle, setFormTitle] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formLink, setFormLink] = useState('');
+  const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 16));
+  const [creatingActivity, setCreatingActivity] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const handleEdit = () => {
@@ -40,7 +41,7 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
     if (!projectId || !project) return;
     
     const confirmed = await alertDialog.showConfirm(
-      `Are you sure you want to permanently delete "${project.name}"? This action cannot be undone and will delete all project data including milestones, links, and activity.`,
+      `Are you sure you want to permanently delete "${project.name}"? This action cannot be undone and will delete all project data including links and activity.`,
       {
         variant: 'error',
         title: 'Delete Project',
@@ -82,22 +83,34 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
     }
   };
 
-  const handleAddMilestone = async () => {
-    if (!newMilestoneName.trim()) return;
-    setCreatingMilestone(true);
+  const handleAddActivity = async () => {
+    if (!formTypeId || !formTitle.trim()) return;
+    setCreatingActivity(true);
     try {
-      await createMilestone({
-        name: newMilestoneName.trim(),
-        targetDate: newMilestoneDate || undefined,
-        status: 'planned',
+      await createActivity({
+        typeId: formTypeId,
+        title: formTitle.trim(),
+        description: formDescription.trim() || undefined,
+        link: formLink.trim() || undefined,
+        occurredAt: formOccurredAt || undefined,
       });
-      setNewMilestoneName('');
-      setNewMilestoneDate('');
-      setAddingMilestone(false);
+      setFormTypeId('');
+      setFormTitle('');
+      setFormDescription('');
+      setFormLink('');
+      setFormOccurredAt(new Date().toISOString().slice(0, 16));
+      setShowAddActivityModal(false);
     } catch (err) {
-      console.error('Failed to create milestone:', err);
+      console.error('Failed to create activity:', err);
+      await alertDialog.showAlert(
+        err instanceof Error ? err.message : 'Failed to create activity',
+        {
+          variant: 'error',
+          title: 'Error',
+        }
+      );
     } finally {
-      setCreatingMilestone(false);
+      setCreatingActivity(false);
     }
   };
 
@@ -131,7 +144,6 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
   // Permission checks (these would come from your auth system)
   const canEdit = true; // TODO: Check actual permissions
   const canDelete = true; // TODO: Check actual permissions
-  const canManageMilestones = true; // TODO: Check actual permissions
 
   const navigate = (path: string) => {
     if (props.onNavigate) {
@@ -213,80 +225,113 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
               </dl>
             </Card>
 
-            {/* Milestones */}
-            <Card
-              title="Milestones"
-              footer={
-                canManageMilestones &&
-                (addingMilestone ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <Input placeholder="Milestone name" value={newMilestoneName} onChange={setNewMilestoneName} />
-                    <Input type="date" value={newMilestoneDate} onChange={setNewMilestoneDate} />
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleAddMilestone}
-                        disabled={creatingMilestone || !newMilestoneName.trim()}
-                      >
-                        Add Milestone
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setAddingMilestone(false);
-                          setNewMilestoneName('');
-                          setNewMilestoneDate('');
-                        }}
-                        disabled={creatingMilestone}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button variant="secondary" size="sm" onClick={() => setAddingMilestone(true)}>
-                    <Plus size={16} style={{ marginRight: '8px' }} />
-                    Add Milestone
-                  </Button>
-                ))
-              }
-            >
-              {milestonesLoading ? (
-                <div style={{ textAlign: 'center', padding: '24px', color: 'var(--hit-muted-foreground, #64748b)' }}>
-                  Loading milestones...
-                </div>
-              ) : milestones.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px', color: 'var(--hit-muted-foreground, #64748b)' }}>
-                  No milestones yet.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {milestones.map((milestone) => (
-                    <MilestoneInlineEditor
-                      key={milestone.id}
-                      milestone={milestone}
-                      onUpdate={updateMilestone}
-                      onDelete={deleteMilestone}
-                      canManage={canManageMilestones}
-                    />
-                  ))}
-                </div>
-              )}
-            </Card>
-
             {/* Activity */}
             <ActivityFeed
               activities={activity}
               loading={activityLoading}
               filter={activityFilter}
               onFilterChange={setActivityFilter}
+              onAddActivity={canEdit ? () => setShowAddActivityModal(true) : undefined}
             />
           </div>
         }
         onNavigate={navigate}
       />
+
+      {/* Add Activity Modal */}
+      <Modal
+        open={showAddActivityModal}
+        onClose={() => setShowAddActivityModal(false)}
+        title="Add Activity"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              Activity Type *
+            </label>
+            <select
+              value={formTypeId}
+              onChange={(e) => setFormTypeId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid var(--hit-border, #e2e8f0)',
+                borderRadius: '6px',
+                fontSize: '14px',
+              }}
+            >
+              <option value="">Select type...</option>
+              {activityTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              Title *
+            </label>
+            <Input
+              value={formTitle}
+              onChange={setFormTitle}
+              placeholder="e.g., Winter Sale 2024"
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              When did this occur? *
+            </label>
+            <Input
+              type="datetime-local"
+              value={formOccurredAt}
+              onChange={setFormOccurredAt}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              Description
+            </label>
+            <TextArea
+              value={formDescription}
+              onChange={setFormDescription}
+              placeholder="What happened?"
+              rows={4}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              Link (optional)
+            </label>
+            <Input
+              value={formLink}
+              onChange={setFormLink}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowAddActivityModal(false)}
+              disabled={creatingActivity}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAddActivity}
+              disabled={creatingActivity || !formTypeId || !formTitle.trim()}
+            >
+              {creatingActivity ? 'Adding...' : 'Add Activity'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
     </Page>
     </>

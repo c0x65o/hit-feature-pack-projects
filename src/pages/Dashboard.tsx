@@ -122,7 +122,7 @@ function DashboardContent() {
             data={projects}
             loading={loading}
             onRowClick={handleRowClick}
-            emptyMessage="No projects yet. Create your first project to track milestones, linked systems, and activity."
+            emptyMessage="No projects yet. Create your first project to track activities, linked systems, and more."
             pageSize={pageSize}
             total={pagination?.total}
             page={page}

@@ -115,24 +115,20 @@ export function useProject(id) {
     }, [fetchData]);
     return { project, loading, error, refresh: fetchData };
 }
-export function useProjectMilestones(projectId) {
-    const [milestones, setMilestones] = useState([]);
-    const [loading, setLoading] = useState(Boolean(projectId));
+export function useProjectActivityTypes() {
+    const [activityTypes, setActivityTypes] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const fetchData = useCallback(async () => {
-        if (!projectId) {
-            setLoading(false);
-            return;
-        }
         try {
             setLoading(true);
-            const res = await fetch(`/api/projects/${projectId}/milestones`);
+            const res = await fetch('/api/projects/activity-types?activeOnly=true');
             if (!res.ok) {
                 const json = await res.json().catch(() => ({}));
-                throw new Error(json?.error || 'Failed to fetch milestones');
+                throw new Error(json?.error || 'Failed to fetch activity types');
             }
             const json = await res.json();
-            setMilestones(json?.data ?? []);
+            setActivityTypes(json.items || []);
             setError(null);
         }
         catch (err) {
@@ -141,51 +137,11 @@ export function useProjectMilestones(projectId) {
         finally {
             setLoading(false);
         }
-    }, [projectId]);
+    }, []);
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-    const createMilestone = async (milestone) => {
-        if (!projectId)
-            throw new Error('Project ID required');
-        const res = await fetch(`/api/projects/${projectId}/milestones`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestone),
-        });
-        if (!res.ok) {
-            const json = await res.json().catch(() => ({}));
-            throw new Error(json?.error || 'Failed to create milestone');
-        }
-        await fetchData();
-    };
-    const updateMilestone = async (milestoneId, milestone) => {
-        if (!projectId)
-            throw new Error('Project ID required');
-        const res = await fetch(`/api/projects/${projectId}/milestones/${milestoneId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(milestone),
-        });
-        if (!res.ok) {
-            const json = await res.json().catch(() => ({}));
-            throw new Error(json?.error || 'Failed to update milestone');
-        }
-        await fetchData();
-    };
-    const deleteMilestone = async (milestoneId) => {
-        if (!projectId)
-            throw new Error('Project ID required');
-        const res = await fetch(`/api/projects/${projectId}/milestones/${milestoneId}`, {
-            method: 'DELETE',
-        });
-        if (!res.ok) {
-            const json = await res.json().catch(() => ({}));
-            throw new Error(json?.error || 'Failed to delete milestone');
-        }
-        await fetchData();
-    };
-    return { milestones, loading, error, refresh: fetchData, createMilestone, updateMilestone, deleteMilestone };
+    return { activityTypes, loading, error, refresh: fetchData };
 }
 export function useProjectLinks(projectId) {
     const [links, setLinks] = useState([]);
@@ -258,7 +214,7 @@ export function useProjectActivity(projectId, filter) {
             setLoading(true);
             const params = new URLSearchParams();
             if (filter)
-                params.set('filter', filter);
+                params.set('activityType', filter);
             const res = await fetch(`/api/projects/${projectId}/activity?${params.toString()}`);
             if (!res.ok) {
                 const json = await res.json().catch(() => ({}));
@@ -278,5 +234,20 @@ export function useProjectActivity(projectId, filter) {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
-    return { activity, loading, error, refresh: fetchData };
+    const createActivity = async (activity) => {
+        if (!projectId)
+            throw new Error('Project ID required');
+        const res = await fetch(`/api/projects/${projectId}/activity`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activity),
+        });
+        if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json?.error || 'Failed to create activity');
+        }
+        await fetchData();
+        return await res.json();
+    };
+    return { activity, loading, error, refresh: fetchData, createActivity };
 }

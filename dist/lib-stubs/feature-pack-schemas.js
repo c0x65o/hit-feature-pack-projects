@@ -6,7 +6,7 @@
  * via the generated lib/feature-pack-schemas.ts file.
  */
 // Re-export schema tables from this feature pack
-export { projects, projectStatuses, projectMilestones, projectLinks, projectActivity, projectNotes, DEFAULT_PROJECT_STATUS_LABELS, MILESTONE_STATUSES, ACTIVITY_TYPES, } from '../schema/projects';
+export { projects, projectStatuses, projectActivityTypes, projectLinks, projectActivity, projectNotes, DEFAULT_PROJECT_STATUS_LABELS, SYSTEM_ACTIVITY_TYPES, } from '../schema/projects';
 // Stubs for forms feature pack schemas (provided at runtime by consuming app)
 // These are minimal type stubs to allow compilation
 import { pgTable, varchar, text, boolean, integer, jsonb, timestamp, index } from 'drizzle-orm/pg-core';

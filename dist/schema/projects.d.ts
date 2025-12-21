@@ -6,7 +6,7 @@
  *
  * Core entities:
  * - projects: Main project records
- * - project_milestones: Project milestones/goals
+ * - project_activity_types: Activity type definitions (setup-controlled)
  * - project_links: Generic links to other entities (no cross-pack FKs)
  * - project_activity: Audit trail for project changes
  *
@@ -246,16 +246,17 @@ export declare const projectStatuses: import("drizzle-orm/pg-core").PgTableWithC
     dialect: "pg";
 }>;
 /**
- * Project Milestones Table
- * Stores project milestones/goals with target dates
+ * Project Activity Types Table (setup-controlled)
+ * Defines activity types that can be used when creating activities
+ * Similar to marketing activity types, but for projects
  */
-export declare const projectMilestones: import("drizzle-orm/pg-core").PgTableWithColumns<{
-    name: "project_milestones";
+export declare const projectActivityTypes: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "project_activity_types";
     schema: undefined;
     columns: {
         id: import("drizzle-orm/pg-core").PgColumn<{
             name: "id";
-            tableName: "project_milestones";
+            tableName: "project_activity_types";
             dataType: "string";
             columnType: "PgUUID";
             data: string;
@@ -265,21 +266,9 @@ export declare const projectMilestones: import("drizzle-orm/pg-core").PgTableWit
             enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
-        projectId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "project_id";
-            tableName: "project_milestones";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        name: import("drizzle-orm/pg-core").PgColumn<{
-            name: "name";
-            tableName: "project_milestones";
+        key: import("drizzle-orm/pg-core").PgColumn<{
+            name: "key";
+            tableName: "project_activity_types";
             dataType: "string";
             columnType: "PgVarchar";
             data: string;
@@ -289,9 +278,33 @@ export declare const projectMilestones: import("drizzle-orm/pg-core").PgTableWit
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
+        name: import("drizzle-orm/pg-core").PgColumn<{
+            name: "name";
+            tableName: "project_activity_types";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
+        category: import("drizzle-orm/pg-core").PgColumn<{
+            name: "category";
+            tableName: "project_activity_types";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
         description: import("drizzle-orm/pg-core").PgColumn<{
             name: "description";
-            tableName: "project_milestones";
+            tableName: "project_activity_types";
             dataType: "string";
             columnType: "PgText";
             data: string;
@@ -301,81 +314,81 @@ export declare const projectMilestones: import("drizzle-orm/pg-core").PgTableWit
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
-        targetDate: import("drizzle-orm/pg-core").PgColumn<{
-            name: "target_date";
-            tableName: "project_milestones";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        completedDate: import("drizzle-orm/pg-core").PgColumn<{
-            name: "completed_date";
-            tableName: "project_milestones";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-        }, {}, {}>;
-        status: import("drizzle-orm/pg-core").PgColumn<{
-            name: "status";
-            tableName: "project_milestones";
+        color: import("drizzle-orm/pg-core").PgColumn<{
+            name: "color";
+            tableName: "project_activity_types";
             dataType: "string";
             columnType: "PgVarchar";
             data: string;
             driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        createdByUserId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "created_by_user_id";
-            tableName: "project_milestones";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
         }, {}, {}>;
-        createdOnTimestamp: import("drizzle-orm/pg-core").PgColumn<{
-            name: "created_on_timestamp";
-            tableName: "project_milestones";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
+        icon: import("drizzle-orm/pg-core").PgColumn<{
+            name: "icon";
+            tableName: "project_activity_types";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
             driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
+        sortOrder: import("drizzle-orm/pg-core").PgColumn<{
+            name: "sort_order";
+            tableName: "project_activity_types";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
-        lastUpdatedByUserId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "last_updated_by_user_id";
-            tableName: "project_milestones";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
+        isSystem: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_system";
+            tableName: "project_activity_types";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
-        lastUpdatedOnTimestamp: import("drizzle-orm/pg-core").PgColumn<{
-            name: "last_updated_on_timestamp";
-            tableName: "project_milestones";
+        isActive: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_active";
+            tableName: "project_activity_types";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "project_activity_types";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
+            tableName: "project_activity_types";
             dataType: "date";
             columnType: "PgTimestamp";
             data: Date;
@@ -512,9 +525,7 @@ export declare const projectLinks: import("drizzle-orm/pg-core").PgTableWithColu
 /**
  * Project Activity Table
  * Audit trail for project changes and events
- * Records: project.created, project.updated, project.status_changed,
- *          project.link_added, project.link_removed,
- *          project.milestone_created, project.milestone_updated
+ * Can be system-generated (project.created, project.updated, etc.) or user-created with activity types
  */
 export declare const projectActivity: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "project_activity";
@@ -544,6 +555,18 @@ export declare const projectActivity: import("drizzle-orm/pg-core").PgTableWithC
             enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
+        typeId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "type_id";
+            tableName: "project_activity";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+        }, {}, {}>;
         activityType: import("drizzle-orm/pg-core").PgColumn<{
             name: "activity_type";
             tableName: "project_activity";
@@ -551,7 +574,19 @@ export declare const projectActivity: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgVarchar";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
+            hasDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
+        title: import("drizzle-orm/pg-core").PgColumn<{
+            name: "title";
+            tableName: "project_activity";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
             hasDefault: false;
             enumValues: [string, ...string[]];
             baseColumn: never;
@@ -578,6 +613,30 @@ export declare const projectActivity: import("drizzle-orm/pg-core").PgTableWithC
             notNull: false;
             hasDefault: false;
             enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
+        link: import("drizzle-orm/pg-core").PgColumn<{
+            name: "link";
+            tableName: "project_activity";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+        }, {}, {}>;
+        occurredAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "occurred_at";
+            tableName: "project_activity";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            enumValues: undefined;
             baseColumn: never;
         }, {}, {}>;
         metadata: import("drizzle-orm/pg-core").PgColumn<{
@@ -704,7 +763,6 @@ export declare const projectNotes: import("drizzle-orm/pg-core").PgTableWithColu
 }>;
 export declare const projectsRelations: import("drizzle-orm").Relations<"projects", {
     status: import("drizzle-orm").One<"project_statuses", true>;
-    milestones: import("drizzle-orm").Many<"project_milestones">;
     links: import("drizzle-orm").Many<"project_links">;
     activity: import("drizzle-orm").Many<"project_activity">;
     notes: import("drizzle-orm").Many<"project_notes">;
@@ -712,27 +770,28 @@ export declare const projectsRelations: import("drizzle-orm").Relations<"project
 export declare const projectStatusesRelations: import("drizzle-orm").Relations<"project_statuses", {
     projects: import("drizzle-orm").Many<"projects">;
 }>;
-export declare const projectMilestonesRelations: import("drizzle-orm").Relations<"project_milestones", {
-    project: import("drizzle-orm").One<"projects", true>;
+export declare const projectActivityTypesRelations: import("drizzle-orm").Relations<"project_activity_types", {
+    activities: import("drizzle-orm").Many<"project_activity">;
 }>;
 export declare const projectLinksRelations: import("drizzle-orm").Relations<"project_links", {
     project: import("drizzle-orm").One<"projects", true>;
 }>;
 export declare const projectActivityRelations: import("drizzle-orm").Relations<"project_activity", {
     project: import("drizzle-orm").One<"projects", true>;
+    activityType: import("drizzle-orm").One<"project_activity_types", false>;
 }>;
 export declare const projectNotesRelations: import("drizzle-orm").Relations<"project_notes", {
     project: import("drizzle-orm").One<"projects", true>;
 }>;
 export type Project = InferSelectModel<typeof projects>;
 export type ProjectStatusRecord = InferSelectModel<typeof projectStatuses>;
-export type ProjectMilestone = InferSelectModel<typeof projectMilestones>;
+export type ProjectActivityType = InferSelectModel<typeof projectActivityTypes>;
 export type ProjectLink = InferSelectModel<typeof projectLinks>;
 export type ProjectActivity = InferSelectModel<typeof projectActivity>;
 export type ProjectNote = InferSelectModel<typeof projectNotes>;
 export type InsertProject = InferInsertModel<typeof projects>;
 export type InsertProjectStatus = InferInsertModel<typeof projectStatuses>;
-export type InsertProjectMilestone = InferInsertModel<typeof projectMilestones>;
+export type InsertProjectActivityType = InferInsertModel<typeof projectActivityTypes>;
 export type InsertProjectLink = InferInsertModel<typeof projectLinks>;
 export type InsertProjectActivity = InferInsertModel<typeof projectActivity>;
 export type InsertProjectNote = InferInsertModel<typeof projectNotes>;
@@ -746,8 +805,10 @@ export type ProjectStatus = string;
  */
 export declare const DEFAULT_PROJECT_STATUS_LABELS: readonly ["Draft", "Active", "Completed", "Cancelled", "Archived"];
 export type DefaultProjectStatusLabel = (typeof DEFAULT_PROJECT_STATUS_LABELS)[number];
-export declare const MILESTONE_STATUSES: readonly ["planned", "in_progress", "completed", "cancelled"];
-export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
-export declare const ACTIVITY_TYPES: readonly ["project.created", "project.updated", "project.status_changed", "project.link_added", "project.link_removed", "project.link_updated", "project.milestone_created", "project.milestone_updated", "project.milestone_completed", "project.milestone_deleted"];
-export type ActivityType = (typeof ACTIVITY_TYPES)[number];
+/**
+ * System activity types (for automatic logging)
+ * These are used when activities are created automatically by the system
+ */
+export declare const SYSTEM_ACTIVITY_TYPES: readonly ["project.created", "project.updated", "project.status_changed", "project.link_added", "project.link_removed", "project.link_updated"];
+export type SystemActivityType = (typeof SYSTEM_ACTIVITY_TYPES)[number];
 //# sourceMappingURL=projects.d.ts.map

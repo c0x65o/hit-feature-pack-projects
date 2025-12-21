@@ -5,3 +5,7 @@ export { EditProject } from './EditProject';
 export { ProjectStatusesSetup } from './ProjectStatusesSetup';
 export { CreateProjectStatus } from './CreateProjectStatus';
 export { EditProjectStatus } from './EditProjectStatus';
+export { ProjectActivityTypesSetup } from './ProjectActivityTypesSetup';
+export { CreateProjectActivityType } from './CreateProjectActivityType';
+export { EditProjectActivityType } from './EditProjectActivityType';
+export { Timeline } from './Timeline';

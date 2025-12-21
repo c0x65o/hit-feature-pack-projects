@@ -16,4 +16,13 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
         totalPages: number;
     };
 }>>;
+/**
+ * POST /api/projects/[projectId]/activity
+ * Create a new activity
+ */
+export declare function POST(request: NextRequest): Promise<NextResponse<{
+    error: string;
+}> | NextResponse<{
+    data: any;
+}>>;
 //# sourceMappingURL=projects-activity.d.ts.map

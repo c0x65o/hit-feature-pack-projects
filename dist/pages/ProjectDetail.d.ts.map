@@ -1,1 +1,1 @@
-{"version":3,"file":"ProjectDetail.d.ts","sourceRoot":"","sources":["../../src/pages/ProjectDetail.tsx"],"names":[],"mappings":"AAiBA,wBAAgB,aAAa,CAAC,KAAK,EAAE;IAAE,EAAE,EAAE,MAAM,CAAC;IAAC,UAAU,CAAC,EAAE,CAAC,IAAI,EAAE,MAAM,KAAK,IAAI,CAAA;CAAE,2CAoRvF;AAED,eAAe,aAAa,CAAC"}
+{"version":3,"file":"ProjectDetail.d.ts","sourceRoot":"","sources":["../../src/pages/ProjectDetail.tsx"],"names":[],"mappings":"AAgBA,wBAAgB,aAAa,CAAC,KAAK,EAAE;IAAE,EAAE,EAAE,MAAM,CAAC;IAAC,UAAU,CAAC,EAAE,CAAC,IAAI,EAAE,MAAM,KAAK,IAAI,CAAA;CAAE,2CAkUvF;AAED,eAAe,aAAa,CAAC"}
