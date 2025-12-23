@@ -151,7 +151,7 @@ export function EditProject(props: { id: string }) {
           <Select
             label="Status"
             value={statusId}
-            onChange={(value) => setStatusId(String(value))}
+            onChange={(value: string | number) => setStatusId(String(value))}
             options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
             disabled={loading || statusesLoading || !activeStatuses.length}
           />

@@ -135,7 +135,7 @@ function DashboardContent() {
             enableViews={true}
             onViewFiltersChange={setViewFilters}
             onViewFilterModeChange={setViewFilterMode}
-            onViewSortingChange={(sorting) => {
+            onViewSortingChange={(sorting: Array<{ id: string; desc: boolean }>) => {
               const first = Array.isArray(sorting) ? sorting[0] : null;
               const id = first?.id;
               if (id === 'name' || id === 'lastUpdatedOnTimestamp') {

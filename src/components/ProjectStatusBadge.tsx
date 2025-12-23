@@ -22,7 +22,7 @@ export function ProjectStatusBadge({ statusId, onChange, canChange = false }: Pr
     return (
       <Select
         value={String(statusId)}
-        onChange={(value) => onChange(String(value))}
+        onChange={(value: string | number) => onChange(String(value))}
         options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
       />
     );

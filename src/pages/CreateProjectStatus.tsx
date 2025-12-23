@@ -134,7 +134,7 @@ export function CreateProjectStatus() {
           <Select
             label="Active?"
             value={isActive ? 'yes' : 'no'}
-            onChange={(v) => setIsActive(String(v) === 'yes')}
+            onChange={(v: string | number) => setIsActive(String(v) === 'yes')}
             options={[
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
