@@ -5,6 +5,6 @@ import { z } from "zod";
 // (Only metadata is updatable.)
 
 export const putBodySchema = z.object({
-  metadata: z.record(z.any()).nullable().optional(),
+  metadata: z.record(z.string(), z.any()).nullable().optional(),
 });
 
