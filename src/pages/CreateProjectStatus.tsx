@@ -5,7 +5,7 @@ import { useUi } from '@hit/ui-kit';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
 export function CreateProjectStatus() {
-  const { Page, Card, Button, Input, Select } = useUi();
+  const { Page, Card, Button, Input, Select, ColorPicker } = useUi();
   const { createStatus } = useProjectStatuses();
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('#64748b');
@@ -83,44 +83,13 @@ export function CreateProjectStatus() {
             maxLength={50}
           />
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: 'var(--hit-muted-foreground, #64748b)',
-                marginBottom: '6px',
-              }}
-            >
-              Color
-            </label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '60px',
-                  height: '40px',
-                  padding: '2px',
-                  backgroundColor: 'var(--hit-input-bg, #ffffff)',
-                  border: '1px solid var(--hit-border-default, #cbd5e1)',
-                  borderRadius: '6px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.5 : 1,
-                }}
-              />
-              <Input
-                value={color}
-                onChange={setColor}
-                placeholder="#64748b"
-                disabled={loading}
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            label="Color"
+            value={color}
+            onChange={setColor}
+            placeholder="#64748b"
+            disabled={loading}
+          />
 
           <Input
             label="Sort Order"

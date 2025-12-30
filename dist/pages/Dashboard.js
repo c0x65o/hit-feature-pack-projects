@@ -82,7 +82,11 @@ function DashboardContent() {
     ], [statusOptions, handleRowClick]);
     const projects = data?.data || [];
     const pagination = data?.pagination;
-    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track activities, linked systems, and more.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: setViewFilters, onViewFilterModeChange: setViewFilterMode, onViewSortingChange: (sorting) => {
+    return (_jsx(Page, { title: "Projects", actions: _jsxs(Button, { variant: "primary", onClick: handleCreate, children: [_jsx(Plus, { size: 16, style: { marginRight: '8px' } }), "Create Project"] }), children: _jsx(Card, { children: error ? (_jsx("div", { style: { padding: '24px', textAlign: 'center', color: 'var(--hit-error, #ef4444)' }, children: error.message })) : (_jsx(DataTable, { columns: columns, data: projects, loading: loading, onRowClick: handleRowClick, emptyMessage: "No projects yet. Create your first project to track activities, linked systems, and more.", pageSize: pageSize, total: pagination?.total, page: page, onPageChange: setPage, manualPagination: true, onRefresh: refresh, refreshing: loading, initialSorting: [{ id: 'lastUpdatedOnTimestamp', desc: true }], tableId: "projects", enableViews: true, onViewFiltersChange: setViewFilters, onViewFilterModeChange: (mode) => {
+                    if (mode === 'all' || mode === 'any') {
+                        setViewFilterMode(mode);
+                    }
+                }, onViewSortingChange: (sorting) => {
                     const first = Array.isArray(sorting) ? sorting[0] : null;
                     const id = first?.id;
                     if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd' || id === 'revenue_all_time_usd') {

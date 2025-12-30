@@ -134,8 +134,12 @@ function DashboardContent() {
             tableId="projects"
             enableViews={true}
             onViewFiltersChange={setViewFilters}
-            onViewFilterModeChange={setViewFilterMode}
-            onViewSortingChange={(sorting: Array<{ id: string; desc: boolean }>) => {
+            onViewFilterModeChange={(mode: string) => {
+              if (mode === 'all' || mode === 'any') {
+                setViewFilterMode(mode);
+              }
+            }}
+            onViewSortingChange={(sorting: Array<{ id: string; desc?: boolean }>) => {
               const first = Array.isArray(sorting) ? sorting[0] : null;
               const id = first?.id;
               if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd' || id === 'revenue_all_time_usd') {

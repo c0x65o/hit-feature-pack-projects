@@ -6,7 +6,7 @@ import { useProjectStatus } from '../hooks/useProjectStatuses';
 import { Trash2 } from 'lucide-react';
 
 export function EditProjectStatus(props: { id?: string }) {
-  const { Page, Card, Button, Input, Select, AlertDialog } = useUi();
+  const { Page, Card, Button, Input, Select, AlertDialog, ColorPicker } = useUi();
   const alertDialog = useAlertDialog();
   const statusId = props.id;
   const { status, loading: statusLoading, updateStatus, deleteStatus } = useProjectStatus(statusId);
@@ -157,44 +157,13 @@ export function EditProjectStatus(props: { id?: string }) {
             maxLength={50}
           />
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: 'var(--hit-muted-foreground, #64748b)',
-                marginBottom: '6px',
-              }}
-            >
-              Color
-            </label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                disabled={loading || deleting}
-                style={{
-                  width: '60px',
-                  height: '40px',
-                  padding: '2px',
-                  backgroundColor: 'var(--hit-input-bg, #ffffff)',
-                  border: '1px solid var(--hit-border-default, #cbd5e1)',
-                  borderRadius: '6px',
-                  cursor: loading || deleting ? 'not-allowed' : 'pointer',
-                  opacity: loading || deleting ? 0.5 : 1,
-                }}
-              />
-              <Input
-                value={color}
-                onChange={setColor}
-                placeholder="#64748b"
-                disabled={loading || deleting}
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            label="Color"
+            value={color}
+            onChange={setColor}
+            placeholder="#64748b"
+            disabled={loading || deleting}
+          />
 
           <Input
             label="Sort Order"

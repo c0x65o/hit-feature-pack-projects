@@ -14,7 +14,7 @@ const CATEGORIES = [
 ];
 
 export function CreateProjectActivityType() {
-  const { Page, Card, Button, Input, Select, TextArea } = useUi();
+  const { Page, Card, Button, Input, Select, TextArea, ColorPicker } = useUi();
   const { createActivityType } = useProjectActivityTypes();
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
@@ -151,44 +151,13 @@ export function CreateProjectActivityType() {
             rows={3}
           />
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: 'var(--hit-muted-foreground, #64748b)',
-                marginBottom: '6px',
-              }}
-            >
-              Color
-            </label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '60px',
-                  height: '40px',
-                  padding: '2px',
-                  backgroundColor: 'var(--hit-input-bg, #ffffff)',
-                  border: '1px solid var(--hit-border-default, #cbd5e1)',
-                  borderRadius: '6px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.5 : 1,
-                }}
-              />
-              <Input
-                value={color}
-                onChange={setColor}
-                placeholder="#3b82f6"
-                disabled={loading}
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            label="Color"
+            value={color}
+            onChange={setColor}
+            placeholder="#3b82f6"
+            disabled={loading}
+          />
 
           <Input
             label="Icon"
