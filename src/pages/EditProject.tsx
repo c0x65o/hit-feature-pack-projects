@@ -1,22 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUi } from '@hit/ui-kit';
+import { useUi, useFormSubmit } from '@hit/ui-kit';
 import { useProject, useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
 export function EditProject(props: { id: string }) {
-  const { Page, Card, Button, Input, TextArea, Select } = useUi();
+  const { Page, Card, Button, Input, TextArea, Select, Alert } = useUi();
   const projectId = props.id;
   const { project, loading: projectLoading } = useProject(projectId);
   const { updateProject } = useProjects();
   const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
+  const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError } = useFormSubmit();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [statusId, setStatusId] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -31,25 +30,25 @@ export function EditProject(props: { id: string }) {
     e.preventDefault();
     if (!projectId) return;
 
-    setError(null);
+    const errors: Record<string, string> = {};
     if (!name.trim()) {
-      setError('Project name is required');
-      return;
+      errors.name = 'Project name is required';
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    setLoading(true);
-    try {
+    const result = await submit(async () => {
       await updateProject(projectId, {
         name: name.trim(),
         slug: slug.trim() || null,
         description: description.trim() || null,
         statusId,
       } as any);
+      return { id: projectId };
+    });
+
+    if (result) {
       window.location.href = `/projects/${projectId}`;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update project');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -108,27 +107,19 @@ export function EditProject(props: { id: string }) {
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                border: '1px solid var(--hit-error, #ef4444)',
-                borderRadius: '8px',
-                color: 'var(--hit-error, #ef4444)',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </div>
+            <Alert variant="error" title="Error" onClose={clearError}>
+              {error.message}
+            </Alert>
           )}
 
           <Input
             label="Project Name"
             value={name}
-            onChange={setName}
+            onChange={(v) => { setName(v); clearFieldError('name'); }}
             placeholder="Enter project name"
             required
-            disabled={loading}
+            disabled={submitting}
+            error={fieldErrors.name}
           />
 
           <Input
@@ -136,7 +127,7 @@ export function EditProject(props: { id: string }) {
             value={slug}
             onChange={setSlug}
             placeholder="URL-friendly identifier"
-            disabled={loading}
+            disabled={submitting}
           />
 
           <TextArea
@@ -145,7 +136,7 @@ export function EditProject(props: { id: string }) {
             onChange={setDescription}
             placeholder="Optional description"
             rows={4}
-            disabled={loading}
+            disabled={submitting}
           />
 
           <Select
@@ -153,15 +144,15 @@ export function EditProject(props: { id: string }) {
             value={statusId}
             onChange={(value: string | number) => setStatusId(String(value))}
             options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
-            disabled={loading || statusesLoading || !activeStatuses.length}
+            disabled={submitting || statusesLoading || !activeStatuses.length}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+            <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={loading || !name.trim()}>
-              Save Changes
+            <Button type="submit" variant="primary" disabled={submitting || !name.trim()}>
+              {submitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi, useAlertDialog, useFormSubmit } from '@hit/ui-kit';
 import { useProjectActivityType } from '../hooks/useProjectActivityTypes';
 import { Trash2 } from 'lucide-react';
 
@@ -15,11 +15,12 @@ const CATEGORIES = [
 ];
 
 export function EditProjectActivityType(props: { id?: string }) {
-  const { Page, Card, Button, Input, Select, TextArea, AlertDialog, ColorPicker } = useUi();
+  const { Page, Card, Button, Input, Select, TextArea, AlertDialog, ColorPicker, Alert } = useUi();
   const alertDialog = useAlertDialog();
   const activityTypeId = props.id;
   const { activityType, loading: activityTypeLoading, updateActivityType, deleteActivityType } =
     useProjectActivityType(activityTypeId);
+  const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError, setError } = useFormSubmit();
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState('project');
@@ -28,9 +29,7 @@ export function EditProjectActivityType(props: { id?: string }) {
   const [icon, setIcon] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
   const [isActive, setIsActive] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activityType) {
@@ -48,14 +47,14 @@ export function EditProjectActivityType(props: { id?: string }) {
     e.preventDefault();
     if (!activityTypeId) return;
 
-    setError(null);
+    const errors: Record<string, string> = {};
     if (!name.trim()) {
-      setError('Name is required');
-      return;
+      errors.name = 'Name is required';
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    setLoading(true);
-    try {
+    const result = await submit(async () => {
       await updateActivityType({
         name: name.trim(),
         category: category || null,
@@ -65,11 +64,11 @@ export function EditProjectActivityType(props: { id?: string }) {
         sortOrder: Number(sortOrder || 0),
         isActive,
       });
+      return { success: true };
+    });
+
+    if (result) {
       window.location.href = '/projects/setup/activity-types';
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update activity type');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -152,18 +151,9 @@ export function EditProjectActivityType(props: { id?: string }) {
         <Card>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {error && (
-              <div
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                  border: '1px solid var(--hit-error, #ef4444)',
-                  borderRadius: '8px',
-                  color: 'var(--hit-error, #ef4444)',
-                  fontSize: '14px',
-                }}
-              >
-                {error}
-              </div>
+              <Alert variant="error" title="Error" onClose={clearError}>
+                {error.message}
+              </Alert>
             )}
 
             <div>
@@ -187,11 +177,12 @@ export function EditProjectActivityType(props: { id?: string }) {
             <Input
               label="Name"
               value={name}
-              onChange={setName}
+              onChange={(v) => { setName(v); clearFieldError('name'); }}
               placeholder="e.g. Game Launch"
               required
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
               maxLength={255}
+              error={fieldErrors.name}
             />
 
             <Select
@@ -199,7 +190,7 @@ export function EditProjectActivityType(props: { id?: string }) {
               value={category}
               onChange={setCategory}
               options={CATEGORIES}
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
             />
 
             <TextArea
@@ -207,7 +198,7 @@ export function EditProjectActivityType(props: { id?: string }) {
               value={description}
               onChange={setDescription}
               placeholder="What this activity type represents..."
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
               rows={3}
             />
 
@@ -216,7 +207,7 @@ export function EditProjectActivityType(props: { id?: string }) {
               value={color}
               onChange={setColor}
               placeholder="#3b82f6"
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
             />
 
             <Input
@@ -224,7 +215,7 @@ export function EditProjectActivityType(props: { id?: string }) {
               value={icon}
               onChange={setIcon}
               placeholder="e.g. rocket (lucide icon name)"
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
               maxLength={100}
             />
             <p style={{ fontSize: '12px', color: 'var(--hit-muted-foreground, #64748b)', marginTop: '-12px' }}>
@@ -236,7 +227,7 @@ export function EditProjectActivityType(props: { id?: string }) {
               value={sortOrder}
               onChange={setSortOrder}
               placeholder="0"
-              disabled={loading || deleting}
+              disabled={submitting || deleting}
               type="number"
             />
 
@@ -248,7 +239,7 @@ export function EditProjectActivityType(props: { id?: string }) {
                 { value: 'yes', label: 'Yes' },
                 { value: 'no', label: 'No' },
               ]}
-              disabled={loading || deleting || activityType.isSystem}
+              disabled={submitting || deleting || activityType.isSystem}
             />
             {activityType.isSystem && (
               <p style={{ fontSize: '12px', color: 'var(--hit-muted-foreground, #64748b)', marginTop: '-12px' }}>
@@ -261,7 +252,7 @@ export function EditProjectActivityType(props: { id?: string }) {
                 type="button"
                 variant="danger"
                 onClick={handleDelete}
-                disabled={loading || deleting || activityType.isSystem}
+                disabled={submitting || deleting || activityType.isSystem}
               >
                 <Trash2 size={16} style={{ marginRight: '8px' }} />
                 {deleting ? 'Deleting...' : 'Delete'}
@@ -272,11 +263,11 @@ export function EditProjectActivityType(props: { id?: string }) {
                 </p>
               )}
               <div style={{ display: 'flex', gap: '12px' }}>
-                <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading || deleting}>
+                <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting || deleting}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" disabled={loading || deleting || !name.trim()}>
-                  Save Changes
+                <Button type="submit" variant="primary" disabled={submitting || deleting || !name.trim()}>
+                  {submitting ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </div>

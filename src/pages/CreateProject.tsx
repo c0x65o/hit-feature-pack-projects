@@ -1,20 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUi } from '@hit/ui-kit';
+import { useUi, useFormSubmit } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
 export function CreateProject() {
-  const { Page, Card, Button, Input, TextArea, Select } = useUi();
+  const { Page, Card, Button, Input, TextArea, Select, Alert } = useUi();
   const { createProject } = useProjects();
   const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
+  const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError } = useFormSubmit<{ id: string }>();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [statusId, setStatusId] = useState<string>('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeStatuses.length > 0 && !statusId) {
@@ -26,26 +25,26 @@ export function CreateProject() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
+    const errors: Record<string, string> = {};
     if (!name.trim()) {
-      setError('Project name is required');
-      return;
+      errors.name = 'Project name is required';
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    setLoading(true);
-    try {
+    const result = await submit(async () => {
       const project = await createProject({
         name: name.trim(),
         slug: slug.trim() || undefined,
         description: description.trim() || undefined,
         statusId,
       });
-      window.location.href = `/projects/${project.data.id}`;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
-    } finally {
-      setLoading(false);
+      return { id: project.data.id };
+    });
+
+    if (result) {
+      window.location.href = `/projects/${result.id}`;
     }
   };
 
@@ -67,27 +66,19 @@ export function CreateProject() {
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                border: '1px solid var(--hit-error, #ef4444)',
-                borderRadius: '8px',
-                color: 'var(--hit-error, #ef4444)',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </div>
+            <Alert variant="error" title="Error" onClose={clearError}>
+              {error.message}
+            </Alert>
           )}
 
           <Input
             label="Project Name"
             value={name}
-            onChange={setName}
+            onChange={(v) => { setName(v); clearFieldError('name'); }}
             placeholder="Enter project name"
             required
-            disabled={loading}
+            disabled={submitting}
+            error={fieldErrors.name}
           />
 
           <Input
@@ -95,7 +86,7 @@ export function CreateProject() {
             value={slug}
             onChange={setSlug}
             placeholder="Optional - will be generated from name if omitted"
-            disabled={loading}
+            disabled={submitting}
           />
 
           <TextArea
@@ -104,7 +95,7 @@ export function CreateProject() {
             onChange={setDescription}
             placeholder="Optional description"
             rows={4}
-            disabled={loading}
+            disabled={submitting}
           />
 
           <Select
@@ -112,15 +103,15 @@ export function CreateProject() {
             value={statusId}
             onChange={(value: string | number) => setStatusId(String(value))}
             options={activeStatuses.map((s) => ({ value: s.id, label: s.label }))}
-            disabled={loading || statusesLoading || !activeStatuses.length}
+            disabled={submitting || statusesLoading || !activeStatuses.length}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+            <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={loading || !name.trim()}>
-              Create Project
+            <Button type="submit" variant="primary" disabled={submitting || !name.trim()}>
+              {submitting ? 'Creating...' : 'Create Project'}
             </Button>
           </div>
         </form>

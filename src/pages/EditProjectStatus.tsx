@@ -1,23 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi, useAlertDialog, useFormSubmit } from '@hit/ui-kit';
 import { useProjectStatus } from '../hooks/useProjectStatuses';
 import { Trash2 } from 'lucide-react';
 
 export function EditProjectStatus(props: { id?: string }) {
-  const { Page, Card, Button, Input, Select, AlertDialog, ColorPicker } = useUi();
+  const { Page, Card, Button, Input, Select, AlertDialog, ColorPicker, Alert } = useUi();
   const alertDialog = useAlertDialog();
   const statusId = props.id;
   const { status, loading: statusLoading, updateStatus, deleteStatus } = useProjectStatus(statusId);
+  const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError, setError } = useFormSubmit();
 
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('#64748b');
   const [sortOrder, setSortOrder] = useState('0');
   const [isActive, setIsActive] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status) {
@@ -32,25 +31,25 @@ export function EditProjectStatus(props: { id?: string }) {
     e.preventDefault();
     if (!statusId) return;
 
-    setError(null);
+    const errors: Record<string, string> = {};
     if (!label.trim()) {
-      setError('Label is required');
-      return;
+      errors.label = 'Label is required';
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    setLoading(true);
-    try {
+    const result = await submit(async () => {
       await updateStatus({
         label: label.trim(),
         color: color.trim() || null,
         sortOrder: Number(sortOrder || 0),
         isActive,
       });
+      return { success: true };
+    });
+
+    if (result) {
       window.location.href = '/projects/setup/statuses';
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -133,28 +132,20 @@ export function EditProjectStatus(props: { id?: string }) {
         <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                border: '1px solid var(--hit-error, #ef4444)',
-                borderRadius: '8px',
-                color: 'var(--hit-error, #ef4444)',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </div>
+            <Alert variant="error" title="Error" onClose={clearError}>
+              {error.message}
+            </Alert>
           )}
 
           <Input
             label="Label"
             value={label}
-            onChange={setLabel}
+            onChange={(v) => { setLabel(v); clearFieldError('label'); }}
             placeholder="e.g. Active"
             required
-            disabled={loading || deleting}
+            disabled={submitting || deleting}
             maxLength={50}
+            error={fieldErrors.label}
           />
 
           <ColorPicker
@@ -162,7 +153,7 @@ export function EditProjectStatus(props: { id?: string }) {
             value={color}
             onChange={setColor}
             placeholder="#64748b"
-            disabled={loading || deleting}
+            disabled={submitting || deleting}
           />
 
           <Input
@@ -170,7 +161,7 @@ export function EditProjectStatus(props: { id?: string }) {
             value={sortOrder}
             onChange={setSortOrder}
             placeholder="0"
-            disabled={loading || deleting}
+            disabled={submitting || deleting}
             type="number"
           />
 
@@ -182,20 +173,20 @@ export function EditProjectStatus(props: { id?: string }) {
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
             ]}
-            disabled={loading || deleting}
+            disabled={submitting || deleting}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '8px' }}>
-            <Button type="button" variant="danger" onClick={handleDelete} disabled={loading || deleting}>
+            <Button type="button" variant="danger" onClick={handleDelete} disabled={submitting || deleting}>
               <Trash2 size={16} style={{ marginRight: '8px' }} />
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
             <div style={{ display: 'flex', gap: '12px' }}>
-              <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading || deleting}>
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting || deleting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" disabled={loading || deleting || !label.trim()}>
-                Save Changes
+              <Button type="submit" variant="primary" disabled={submitting || deleting || !label.trim()}>
+                {submitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>

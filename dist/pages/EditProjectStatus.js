@@ -1,21 +1,20 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi, useAlertDialog, useFormSubmit } from '@hit/ui-kit';
 import { useProjectStatus } from '../hooks/useProjectStatuses';
 import { Trash2 } from 'lucide-react';
 export function EditProjectStatus(props) {
-    const { Page, Card, Button, Input, Select, AlertDialog, ColorPicker } = useUi();
+    const { Page, Card, Button, Input, Select, AlertDialog, ColorPicker, Alert } = useUi();
     const alertDialog = useAlertDialog();
     const statusId = props.id;
     const { status, loading: statusLoading, updateStatus, deleteStatus } = useProjectStatus(statusId);
+    const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError, setError } = useFormSubmit();
     const [label, setLabel] = useState('');
     const [color, setColor] = useState('#64748b');
     const [sortOrder, setSortOrder] = useState('0');
     const [isActive, setIsActive] = useState(true);
-    const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const [error, setError] = useState(null);
     useEffect(() => {
         if (status) {
             setLabel(status.label);
@@ -28,26 +27,24 @@ export function EditProjectStatus(props) {
         e.preventDefault();
         if (!statusId)
             return;
-        setError(null);
+        const errors = {};
         if (!label.trim()) {
-            setError('Label is required');
-            return;
+            errors.label = 'Label is required';
         }
-        setLoading(true);
-        try {
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0)
+            return;
+        const result = await submit(async () => {
             await updateStatus({
                 label: label.trim(),
                 color: color.trim() || null,
                 sortOrder: Number(sortOrder || 0),
                 isActive,
             });
+            return { success: true };
+        });
+        if (result) {
             window.location.href = '/projects/setup/statuses';
-        }
-        catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update status');
-        }
-        finally {
-            setLoading(false);
         }
     };
     const handleDelete = async () => {
@@ -95,16 +92,9 @@ export function EditProjectStatus(props) {
     if (!status) {
         return (_jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsxs(Card, { children: [_jsx("div", { style: { textAlign: 'center', padding: '24px', color: 'var(--hit-error, #ef4444)' }, children: "Status not found" }), _jsx("div", { style: { textAlign: 'center', marginTop: '16px' }, children: _jsx(Button, { variant: "secondary", onClick: () => (window.location.href = '/projects/setup/statuses'), children: "Back to Statuses" }) })] }) }));
     }
-    return (_jsxs(_Fragment, { children: [_jsx(AlertDialog, { ...alertDialog.props }), _jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx("div", { style: {
-                                    padding: '12px',
-                                    backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                                    border: '1px solid var(--hit-error, #ef4444)',
-                                    borderRadius: '8px',
-                                    color: 'var(--hit-error, #ef4444)',
-                                    fontSize: '14px',
-                                }, children: error })), _jsx(Input, { label: "Label", value: label, onChange: setLabel, placeholder: "e.g. Active", required: true, disabled: loading || deleting, maxLength: 50 }), _jsx(ColorPicker, { label: "Color", value: color, onChange: setColor, placeholder: "#64748b", disabled: loading || deleting }), _jsx(Input, { label: "Sort Order", value: sortOrder, onChange: setSortOrder, placeholder: "0", disabled: loading || deleting, type: "number" }), _jsx(Select, { label: "Active?", value: isActive ? 'yes' : 'no', onChange: (v) => setIsActive(String(v) === 'yes'), options: [
+    return (_jsxs(_Fragment, { children: [_jsx(AlertDialog, { ...alertDialog.props }), _jsx(Page, { title: "Edit Status", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx(Alert, { variant: "error", title: "Error", onClose: clearError, children: error.message })), _jsx(Input, { label: "Label", value: label, onChange: (v) => { setLabel(v); clearFieldError('label'); }, placeholder: "e.g. Active", required: true, disabled: submitting || deleting, maxLength: 50, error: fieldErrors.label }), _jsx(ColorPicker, { label: "Color", value: color, onChange: setColor, placeholder: "#64748b", disabled: submitting || deleting }), _jsx(Input, { label: "Sort Order", value: sortOrder, onChange: setSortOrder, placeholder: "0", disabled: submitting || deleting, type: "number" }), _jsx(Select, { label: "Active?", value: isActive ? 'yes' : 'no', onChange: (v) => setIsActive(String(v) === 'yes'), options: [
                                     { value: 'yes', label: 'Yes' },
                                     { value: 'no', label: 'No' },
-                                ], disabled: loading || deleting }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '8px' }, children: [_jsxs(Button, { type: "button", variant: "danger", onClick: handleDelete, disabled: loading || deleting, children: [_jsx(Trash2, { size: 16, style: { marginRight: '8px' } }), deleting ? 'Deleting...' : 'Delete'] }), _jsxs("div", { style: { display: 'flex', gap: '12px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading || deleting, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || deleting || !label.trim(), children: "Save Changes" })] })] })] }) }) })] }));
+                                ], disabled: submitting || deleting }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '8px' }, children: [_jsxs(Button, { type: "button", variant: "danger", onClick: handleDelete, disabled: submitting || deleting, children: [_jsx(Trash2, { size: 16, style: { marginRight: '8px' } }), deleting ? 'Deleting...' : 'Delete'] }), _jsxs("div", { style: { display: 'flex', gap: '12px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: submitting || deleting, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: submitting || deleting || !label.trim(), children: submitting ? 'Saving...' : 'Save Changes' })] })] })] }) }) })] }));
 }
 export default EditProjectStatus;

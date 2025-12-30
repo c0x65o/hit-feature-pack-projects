@@ -1,41 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUi } from '@hit/ui-kit';
+import { useUi, useFormSubmit } from '@hit/ui-kit';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 
 export function CreateProjectStatus() {
-  const { Page, Card, Button, Input, Select, ColorPicker } = useUi();
+  const { Page, Card, Button, Input, Select, ColorPicker, Alert } = useUi();
   const { createStatus } = useProjectStatuses();
+  const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError } = useFormSubmit();
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('#64748b');
   const [sortOrder, setSortOrder] = useState('0');
   const [isActive, setIsActive] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
+    const errors: Record<string, string> = {};
     if (!label.trim()) {
-      setError('Label is required');
-      return;
+      errors.label = 'Label is required';
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    setLoading(true);
-    try {
+    const result = await submit(async () => {
       await createStatus({
         label: label.trim(),
         color: color.trim() || null,
         sortOrder: Number(sortOrder || 0),
         isActive,
       });
+      return { success: true };
+    });
+
+    if (result) {
       window.location.href = '/projects/setup/statuses';
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create status');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -59,28 +58,20 @@ export function CreateProjectStatus() {
       <Card>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {error && (
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                border: '1px solid var(--hit-error, #ef4444)',
-                borderRadius: '8px',
-                color: 'var(--hit-error, #ef4444)',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </div>
+            <Alert variant="error" title="Error" onClose={clearError}>
+              {error.message}
+            </Alert>
           )}
 
           <Input
             label="Label"
             value={label}
-            onChange={setLabel}
+            onChange={(v) => { setLabel(v); clearFieldError('label'); }}
             placeholder="e.g. Active"
             required
-            disabled={loading}
+            disabled={submitting}
             maxLength={50}
+            error={fieldErrors.label}
           />
 
           <ColorPicker
@@ -88,7 +79,7 @@ export function CreateProjectStatus() {
             value={color}
             onChange={setColor}
             placeholder="#64748b"
-            disabled={loading}
+            disabled={submitting}
           />
 
           <Input
@@ -96,7 +87,7 @@ export function CreateProjectStatus() {
             value={sortOrder}
             onChange={setSortOrder}
             placeholder="0"
-            disabled={loading}
+            disabled={submitting}
             type="number"
           />
 
@@ -108,15 +99,15 @@ export function CreateProjectStatus() {
               { value: 'yes', label: 'Yes' },
               { value: 'no', label: 'No' },
             ]}
-            disabled={loading}
+            disabled={submitting}
           />
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={loading}>
+            <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={loading || !label.trim()}>
-              Create Status
+            <Button type="submit" variant="primary" disabled={submitting || !label.trim()}>
+              {submitting ? 'Creating...' : 'Create Status'}
             </Button>
           </div>
         </form>

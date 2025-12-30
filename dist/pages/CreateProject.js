@@ -1,19 +1,18 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { useUi } from '@hit/ui-kit';
+import { useUi, useFormSubmit } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 export function CreateProject() {
-    const { Page, Card, Button, Input, TextArea, Select } = useUi();
+    const { Page, Card, Button, Input, TextArea, Select, Alert } = useUi();
     const { createProject } = useProjects();
     const { activeStatuses, loading: statusesLoading } = useProjectStatuses();
+    const { submitting, error, fieldErrors, submit, clearError, setFieldErrors, clearFieldError } = useFormSubmit();
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
     const [statusId, setStatusId] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     useEffect(() => {
         if (activeStatuses.length > 0 && !statusId) {
             // Set to first active status sorted by sortOrder
@@ -23,26 +22,24 @@ export function CreateProject() {
     }, [activeStatuses, statusId]);
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
+        const errors = {};
         if (!name.trim()) {
-            setError('Project name is required');
-            return;
+            errors.name = 'Project name is required';
         }
-        setLoading(true);
-        try {
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0)
+            return;
+        const result = await submit(async () => {
             const project = await createProject({
                 name: name.trim(),
                 slug: slug.trim() || undefined,
                 description: description.trim() || undefined,
                 statusId,
             });
-            window.location.href = `/projects/${project.data.id}`;
-        }
-        catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create project');
-        }
-        finally {
-            setLoading(false);
+            return { id: project.data.id };
+        });
+        if (result) {
+            window.location.href = `/projects/${result.id}`;
         }
     };
     const handleCancel = () => {
@@ -55,13 +52,6 @@ export function CreateProject() {
         { label: 'Projects', href: '/projects' },
         { label: 'Create Project' },
     ];
-    return (_jsx(Page, { title: "Create Project", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx("div", { style: {
-                            padding: '12px',
-                            backgroundColor: 'var(--hit-error-light, rgba(239, 68, 68, 0.1))',
-                            border: '1px solid var(--hit-error, #ef4444)',
-                            borderRadius: '8px',
-                            color: 'var(--hit-error, #ef4444)',
-                            fontSize: '14px',
-                        }, children: error })), _jsx(Input, { label: "Project Name", value: name, onChange: setName, placeholder: "Enter project name", required: true, disabled: loading }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "Optional - will be generated from name if omitted", disabled: loading }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: loading }), _jsx(Select, { label: "Status", value: statusId, onChange: (value) => setStatusId(String(value)), options: activeStatuses.map((s) => ({ value: s.id, label: s.label })), disabled: loading || statusesLoading || !activeStatuses.length }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: loading, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: loading || !name.trim(), children: "Create Project" })] })] }) }) }));
+    return (_jsx(Page, { title: "Create Project", breadcrumbs: breadcrumbs, onNavigate: navigate, children: _jsx(Card, { children: _jsxs("form", { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' }, children: [error && (_jsx(Alert, { variant: "error", title: "Error", onClose: clearError, children: error.message })), _jsx(Input, { label: "Project Name", value: name, onChange: (v) => { setName(v); clearFieldError('name'); }, placeholder: "Enter project name", required: true, disabled: submitting, error: fieldErrors.name }), _jsx(Input, { label: "Slug", value: slug, onChange: setSlug, placeholder: "Optional - will be generated from name if omitted", disabled: submitting }), _jsx(TextArea, { label: "Description", value: description, onChange: setDescription, placeholder: "Optional description", rows: 4, disabled: submitting }), _jsx(Select, { label: "Status", value: statusId, onChange: (value) => setStatusId(String(value)), options: activeStatuses.map((s) => ({ value: s.id, label: s.label })), disabled: submitting || statusesLoading || !activeStatuses.length }), _jsxs("div", { style: { display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { type: "button", variant: "secondary", onClick: handleCancel, disabled: submitting, children: "Cancel" }), _jsx(Button, { type: "submit", variant: "primary", disabled: submitting || !name.trim(), children: submitting ? 'Creating...' : 'Create Project' })] })] }) }) }));
 }
 export default CreateProject;
