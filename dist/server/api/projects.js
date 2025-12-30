@@ -201,22 +201,21 @@ export async function GET(request) {
             lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
         };
         const metricSortKey = String(sortBy || '').trim();
-        const isMetricSort = metricSortKey === 'revenue_30d_usd';
+        const isMetricSort = metricSortKey === 'revenue_30d_usd' || metricSortKey === 'revenue_all_time_usd';
         let orderDirection = null;
         let metricJoin = null;
         let metricOn = null;
         let metricSelect = {};
         if (isMetricSort) {
-            // revenue_30d_usd = sum(revenue_usd) over last 30 days (missing treated as 0)
             const dayMs = 24 * 60 * 60 * 1000;
-            const start = new Date(Date.now() - 30 * dayMs);
+            const start = metricSortKey === 'revenue_30d_usd' ? new Date(Date.now() - 30 * dayMs) : null;
             const rev = db
                 .select({
                 entityId: metricsMetricPoints.entityId,
                 revenue: sql `sum(${metricsMetricPoints.value})::float8`.as('revenue'),
             })
                 .from(metricsMetricPoints)
-                .where(and(eq(metricsMetricPoints.entityKind, 'project'), eq(metricsMetricPoints.metricKey, 'revenue_usd'), gte(metricsMetricPoints.date, start)))
+                .where(and(eq(metricsMetricPoints.entityKind, 'project'), eq(metricsMetricPoints.metricKey, 'gross_revenue_usd'), ...(start ? [gte(metricsMetricPoints.date, start)] : [])))
                 .groupBy(metricsMetricPoints.entityId)
                 .as('rev_30d');
             metricJoin = rev;
@@ -224,7 +223,9 @@ export async function GET(request) {
             const sortExpr = sql `coalesce(${rev.revenue}, 0)`;
             orderDirection = sortOrder === 'asc' ? asc(sortExpr) : desc(sortExpr);
             metricSelect = {
-                revenue_30d_usd: sql `coalesce(${rev.revenue}, 0)`.as('revenue_30d_usd'),
+                ...(metricSortKey === 'revenue_30d_usd'
+                    ? { revenue_30d_usd: sql `coalesce(${rev.revenue}, 0)`.as('revenue_30d_usd') }
+                    : { revenue_all_time_usd: sql `coalesce(${rev.revenue}, 0)`.as('revenue_all_time_usd') }),
             };
         }
         else {

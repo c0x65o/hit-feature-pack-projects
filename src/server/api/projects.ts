@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
     };
 
     const metricSortKey = String(sortBy || '').trim();
-    const isMetricSort = metricSortKey === 'revenue_30d_usd';
+    const isMetricSort = metricSortKey === 'revenue_30d_usd' || metricSortKey === 'revenue_all_time_usd';
 
     let orderDirection: any = null;
     let metricJoin: any = null;
@@ -235,10 +235,8 @@ export async function GET(request: NextRequest) {
     let metricSelect: any = {};
 
     if (isMetricSort) {
-      // revenue_30d_usd = sum(revenue_usd) over last 30 days (missing treated as 0)
       const dayMs = 24 * 60 * 60 * 1000;
-      const start = new Date(Date.now() - 30 * dayMs);
-
+      const start = metricSortKey === 'revenue_30d_usd' ? new Date(Date.now() - 30 * dayMs) : null;
       const rev = db
         .select({
           entityId: metricsMetricPoints.entityId,
@@ -248,8 +246,8 @@ export async function GET(request: NextRequest) {
         .where(
           and(
             eq(metricsMetricPoints.entityKind, 'project'),
-            eq(metricsMetricPoints.metricKey, 'revenue_usd'),
-            gte(metricsMetricPoints.date, start)
+            eq(metricsMetricPoints.metricKey, 'gross_revenue_usd'),
+            ...(start ? [gte(metricsMetricPoints.date, start)] : [])
           )
         )
         .groupBy(metricsMetricPoints.entityId)
@@ -260,7 +258,9 @@ export async function GET(request: NextRequest) {
       const sortExpr = sql<number>`coalesce(${(rev as any).revenue}, 0)`;
       orderDirection = sortOrder === 'asc' ? asc(sortExpr as any) : desc(sortExpr as any);
       metricSelect = {
-        revenue_30d_usd: sql<number>`coalesce(${(rev as any).revenue}, 0)`.as('revenue_30d_usd'),
+        ...(metricSortKey === 'revenue_30d_usd'
+          ? { revenue_30d_usd: sql<number>`coalesce(${(rev as any).revenue}, 0)`.as('revenue_30d_usd') }
+          : { revenue_all_time_usd: sql<number>`coalesce(${(rev as any).revenue}, 0)`.as('revenue_all_time_usd') }),
       };
     } else {
       const orderCol = sortColumns[sortBy] ?? projects.createdOnTimestamp;

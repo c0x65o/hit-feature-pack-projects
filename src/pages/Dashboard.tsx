@@ -138,7 +138,7 @@ function DashboardContent() {
             onViewSortingChange={(sorting: Array<{ id: string; desc: boolean }>) => {
               const first = Array.isArray(sorting) ? sorting[0] : null;
               const id = first?.id;
-              if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd') {
+              if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd' || id === 'revenue_all_time_usd') {
                 setSortConfig({ sortBy: id, sortOrder: first?.desc ? 'desc' : 'asc' });
               }
             }}
