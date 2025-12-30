@@ -5,7 +5,7 @@ interface UseProjectsOptions {
     search?: string;
     statusId?: string;
     excludeArchived?: boolean;
-    sortBy?: 'name' | 'lastUpdatedOnTimestamp';
+    sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     /** Advanced view filters (used by table views) */
     filters?: Array<{

@@ -2,12 +2,24 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { projects, projectStatuses, projectActivity, } from '@/lib/feature-pack-schemas';
-import { eq, desc, asc, like, sql, and, or } from 'drizzle-orm';
+import { eq, desc, asc, like, sql, and, or, gte } from 'drizzle-orm';
+import { pgTable, varchar, timestamp, numeric } from 'drizzle-orm/pg-core';
 import { extractUserFromRequest } from '../auth';
 import { isAdmin } from '../lib/access';
 // Required for Next.js App Router
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+// NOTE:
+// This feature pack builds in isolation, so it cannot rely on other feature packs'
+// schemas being present in '@/lib/feature-pack-schemas' during `tsc`.
+// We define the minimal shape we need for metric-backed sorting locally.
+const metricsMetricPoints = pgTable('metrics_metric_points', {
+    entityKind: varchar('entity_kind', { length: 50 }).notNull(),
+    entityId: varchar('entity_id', { length: 255 }).notNull(),
+    metricKey: varchar('metric_key', { length: 100 }).notNull(),
+    date: timestamp('date').notNull(),
+    value: numeric('value', { precision: 20, scale: 4 }).notNull(),
+});
 function getPackOptions(request) {
     const user = extractUserFromRequest(request);
     if (!user)
@@ -180,7 +192,7 @@ export async function GET(request) {
         if (viewFilterConditions.length > 0) {
             conditions.push(filterMode === 'any' ? or(...viewFilterConditions) : and(...viewFilterConditions));
         }
-        // Apply sorting
+        // Apply sorting (supports metric-backed sort keys too)
         const sortColumns = {
             id: projects.id,
             name: projects.name,
@@ -188,8 +200,37 @@ export async function GET(request) {
             createdOnTimestamp: projects.createdOnTimestamp,
             lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
         };
-        const orderCol = sortColumns[sortBy] ?? projects.createdOnTimestamp;
-        const orderDirection = sortOrder === 'asc' ? asc(orderCol) : desc(orderCol);
+        const metricSortKey = String(sortBy || '').trim();
+        const isMetricSort = metricSortKey === 'revenue_30d_usd';
+        let orderDirection = null;
+        let metricJoin = null;
+        let metricOn = null;
+        let metricSelect = {};
+        if (isMetricSort) {
+            // revenue_30d_usd = sum(revenue_usd) over last 30 days (missing treated as 0)
+            const dayMs = 24 * 60 * 60 * 1000;
+            const start = new Date(Date.now() - 30 * dayMs);
+            const rev = db
+                .select({
+                entityId: metricsMetricPoints.entityId,
+                revenue: sql `sum(${metricsMetricPoints.value})::float8`.as('revenue'),
+            })
+                .from(metricsMetricPoints)
+                .where(and(eq(metricsMetricPoints.entityKind, 'project'), eq(metricsMetricPoints.metricKey, 'revenue_usd'), gte(metricsMetricPoints.date, start)))
+                .groupBy(metricsMetricPoints.entityId)
+                .as('rev_30d');
+            metricJoin = rev;
+            metricOn = sql `${projects.id}::text = ${rev.entityId}`;
+            const sortExpr = sql `coalesce(${rev.revenue}, 0)`;
+            orderDirection = sortOrder === 'asc' ? asc(sortExpr) : desc(sortExpr);
+            metricSelect = {
+                revenue_30d_usd: sql `coalesce(${rev.revenue}, 0)`.as('revenue_30d_usd'),
+            };
+        }
+        else {
+            const orderCol = sortColumns[sortBy] ?? projects.createdOnTimestamp;
+            orderDirection = sortOrder === 'asc' ? asc(orderCol) : desc(orderCol);
+        }
         // Build where clause
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
         // All-authenticated read: project visibility is not restricted by group membership.
@@ -209,9 +250,13 @@ export async function GET(request) {
             createdOnTimestamp: projects.createdOnTimestamp,
             lastUpdatedByUserId: projects.lastUpdatedByUserId,
             lastUpdatedOnTimestamp: projects.lastUpdatedOnTimestamp,
+            ...metricSelect,
         })
             .from(projects)
             .leftJoin(projectStatuses, eq(projects.statusId, projectStatuses.id));
+        if (metricJoin) {
+            baseQuery.leftJoin(metricJoin, metricOn);
+        }
         const items = whereClause
             ? await baseQuery.where(whereClause).orderBy(orderDirection).limit(pageSize).offset(offset)
             : await baseQuery.orderBy(orderDirection).limit(pageSize).offset(offset);

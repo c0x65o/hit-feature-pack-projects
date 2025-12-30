@@ -19,7 +19,7 @@ function DashboardContent() {
   // View state from table views (filters + AND/OR mode + default sorting)
   const [viewFilters, setViewFilters] = useState<Array<{ field: string; operator: string; value: any }>>([]);
   const [viewFilterMode, setViewFilterMode] = useState<'all' | 'any'>('all');
-  const [sortConfig, setSortConfig] = useState<{ sortBy: 'name' | 'lastUpdatedOnTimestamp'; sortOrder: 'asc' | 'desc' }>({
+  const [sortConfig, setSortConfig] = useState<{ sortBy: string; sortOrder: 'asc' | 'desc' }>({
     sortBy: 'lastUpdatedOnTimestamp',
     sortOrder: 'desc',
   });
@@ -138,7 +138,7 @@ function DashboardContent() {
             onViewSortingChange={(sorting: Array<{ id: string; desc: boolean }>) => {
               const first = Array.isArray(sorting) ? sorting[0] : null;
               const id = first?.id;
-              if (id === 'name' || id === 'lastUpdatedOnTimestamp') {
+              if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd') {
                 setSortConfig({ sortBy: id, sortOrder: first?.desc ? 'desc' : 'asc' });
               }
             }}
