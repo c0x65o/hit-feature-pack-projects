@@ -1,1 +1,0 @@
-{"version":3,"file":"projects-links.d.ts","sourceRoot":"","sources":["../../../src/server/api/projects-links.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAYxD,eAAO,MAAM,OAAO,kBAAkB,CAAC;AACvC,eAAO,MAAM,OAAO,WAAW,CAAC;AAgChC;;;GAGG;AACH,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW;;;;IAsD7C;AAED;;;GAGG;AACH,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;IAoG9C"}

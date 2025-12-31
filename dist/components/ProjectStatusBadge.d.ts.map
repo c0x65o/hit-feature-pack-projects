@@ -1,1 +1,0 @@
-{"version":3,"file":"ProjectStatusBadge.d.ts","sourceRoot":"","sources":["../../src/components/ProjectStatusBadge.tsx"],"names":[],"mappings":"AAMA,UAAU,uBAAuB;IAC/B,QAAQ,EAAE,MAAM,CAAC;IACjB,QAAQ,CAAC,EAAE,CAAC,WAAW,EAAE,MAAM,KAAK,IAAI,CAAC;IACzC,SAAS,CAAC,EAAE,OAAO,CAAC;CACrB;AAED,wBAAgB,kBAAkB,CAAC,EAAE,QAAQ,EAAE,QAAQ,EAAE,SAAiB,EAAE,EAAE,uBAAuB,2CA4BpG"}
