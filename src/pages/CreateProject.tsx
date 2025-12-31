@@ -74,7 +74,7 @@ export function CreateProject() {
           <Input
             label="Project Name"
             value={name}
-            onChange={(v) => { setName(v); clearFieldError('name'); }}
+            onChange={(v: string) => { setName(v); clearFieldError('name'); }}
             placeholder="Enter project name"
             required
             disabled={submitting}

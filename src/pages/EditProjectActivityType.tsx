@@ -177,7 +177,7 @@ export function EditProjectActivityType(props: { id?: string }) {
             <Input
               label="Name"
               value={name}
-              onChange={(v) => { setName(v); clearFieldError('name'); }}
+              onChange={(v: string) => { setName(v); clearFieldError('name'); }}
               placeholder="e.g. Game Launch"
               required
               disabled={submitting || deleting}

@@ -140,7 +140,7 @@ export function EditProjectStatus(props: { id?: string }) {
           <Input
             label="Label"
             value={label}
-            onChange={(v) => { setLabel(v); clearFieldError('label'); }}
+            onChange={(v: string) => { setLabel(v); clearFieldError('label'); }}
             placeholder="e.g. Active"
             required
             disabled={submitting || deleting}

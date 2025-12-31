@@ -101,7 +101,7 @@ export function CreateProjectActivityType() {
           <Input
             label="Key"
             value={key}
-            onChange={(v) => { handleKeyChange(v); clearFieldError('key'); }}
+            onChange={(v: string) => { handleKeyChange(v); clearFieldError('key'); }}
             placeholder="e.g. game_launch"
             required
             disabled={submitting}
@@ -115,7 +115,7 @@ export function CreateProjectActivityType() {
           <Input
             label="Name"
             value={name}
-            onChange={(v) => { setName(v); clearFieldError('name'); }}
+            onChange={(v: string) => { setName(v); clearFieldError('name'); }}
             placeholder="e.g. Game Launch"
             required
             disabled={submitting}
