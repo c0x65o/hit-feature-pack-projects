@@ -112,6 +112,7 @@ export declare function useProjectActivity(projectId: string | undefined, filter
     activity: {
         id: string;
         description: string | null;
+        link: string | null;
         createdAt: Date;
         projectId: string;
         metadata: unknown;
@@ -119,7 +120,6 @@ export declare function useProjectActivity(projectId: string | undefined, filter
         activityType: string | null;
         title: string | null;
         userId: string;
-        link: string | null;
         occurredAt: Date;
     }[];
     loading: boolean;
