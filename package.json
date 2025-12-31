@@ -1,6 +1,6 @@
 {
   "name": "@hit/feature-pack-projects",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "description": "A HIT feature pack",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -49,7 +49,7 @@
     "lucide-react": "^0.460.0",
     "next": "^15.5.9",
     "react": "^19.2.3",
-    "zod": "^4.2.1"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@hit/feature-pack-forms": "github:c0x65o/hit-feature-pack-forms#96d9e07763dd0eb954872047595fde15a7dac58f",
@@ -62,7 +62,7 @@
     "lucide-react": "^0.460.0",
     "next": "^15.5.9",
     "typescript": "^5",
-    "zod": "^4.2.1"
+    "zod": "^4.0.0"
   },
   "keywords": [
     "hit",
