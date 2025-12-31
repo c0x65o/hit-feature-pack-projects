@@ -1,16 +1,7 @@
 import { z } from "zod";
 export declare const postBodySchema: z.ZodObject<{
     entityId: z.ZodString;
-    metadata: z.ZodOptional<z.ZodNullable<z.ZodType<import("drizzle-zod").Json, z.ZodTypeDef, import("drizzle-zod").Json>>>;
-} & {
+    metadata: z.ZodOptional<z.ZodNullable<z.ZodType<import("drizzle-zod").Json, unknown, z.core.$ZodTypeInternals<import("drizzle-zod").Json, unknown>>>>;
     entityType: z.ZodString;
-}, "strip", z.ZodTypeAny, {
-    entityType: string;
-    entityId: string;
-    metadata?: import("drizzle-zod").Json | undefined;
-}, {
-    entityType: string;
-    entityId: string;
-    metadata?: import("drizzle-zod").Json | undefined;
-}>;
+}, "strip">;
 //# sourceMappingURL=projects-links.schema.d.ts.map

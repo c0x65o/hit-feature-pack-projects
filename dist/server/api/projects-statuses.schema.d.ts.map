@@ -1,1 +1,1 @@
-{"version":3,"file":"projects-statuses.schema.d.ts","sourceRoot":"","sources":["../../../src/server/api/projects-statuses.schema.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAYxB,eAAO,MAAM,cAAc;;;;;;;;;;;;;;;;;;EAIzB,CAAC"}
+{"version":3,"file":"projects-statuses.schema.d.ts","sourceRoot":"","sources":["../../../src/server/api/projects-statuses.schema.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAYxB,eAAO,MAAM,cAAc;;;;;WAIzB,CAAC"}
