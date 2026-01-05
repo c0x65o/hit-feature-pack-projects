@@ -9,7 +9,7 @@ import {
   type Project,
 } from '@/lib/feature-pack-schemas';
 import { eq, desc, asc, like, sql, and, or, gte, type AnyColumn } from 'drizzle-orm';
-import { pgTable, varchar, timestamp, numeric } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, numeric, jsonb } from 'drizzle-orm/pg-core';
 import { extractUserFromRequest } from '../auth';
 import { isAdmin } from '../lib/access';
 
@@ -27,6 +27,15 @@ const metricsMetricPoints = pgTable('metrics_metric_points', {
   metricKey: varchar('metric_key', { length: 100 }).notNull(),
   date: timestamp('date').notNull(),
   value: numeric('value', { precision: 20, scale: 4 }).notNull(),
+  dimensions: jsonb('dimensions'),
+});
+
+const metricsLinks = pgTable('metrics_links', {
+  linkType: varchar('link_type', { length: 255 }).notNull(),
+  linkId: varchar('link_id', { length: 255 }).notNull(),
+  targetKind: varchar('target_kind', { length: 50 }).notNull(),
+  targetId: varchar('target_id', { length: 255 }).notNull(),
+  metadata: jsonb('metadata'),
 });
 
 /**
@@ -237,20 +246,38 @@ export async function GET(request: NextRequest) {
     if (isMetricSort) {
       const dayMs = 24 * 60 * 60 * 1000;
       const start = metricSortKey === 'revenue_30d_usd' ? new Date(Date.now() - 30 * dayMs) : null;
+      // Production-safe revenue sort:
+      // Prefer project-scoped points, but fall back to summing by steam_app_id dimension mapped to projects.
+      //
+      // We build a per-project revenue subquery by joining:
+      // projects.slug -> metrics_links.metadata.project_slug -> steam_app_id
+      // then summing points where dimensions.steam_app_id matches.
+      //
+      // NOTE: This does not rely on entity_kind=project, so it works if points are ingested under forms_storefronts.
+      const timeFilter = start ? sql`and ${metricsMetricPoints.date} >= ${start}` : sql``;
       const rev = db
         .select({
-          entityId: metricsMetricPoints.entityId,
-          revenue: sql<number>`sum(${metricsMetricPoints.value})::float8`.as('revenue'),
+          entityId: projects.id,
+          revenue: sql<number>`coalesce(sum(${metricsMetricPoints.value})::float8, 0)`.as('revenue'),
         } as any)
-        .from(metricsMetricPoints)
-        .where(
+        .from(projects)
+        .leftJoin(
+          metricsLinks as any,
           and(
-            eq(metricsMetricPoints.entityKind, 'project'),
-            eq(metricsMetricPoints.metricKey, 'gross_revenue_usd'),
-            ...(start ? [gte(metricsMetricPoints.date, start)] : [])
-          )
+            eq((metricsLinks as any).linkType, 'metrics.field_mapper'),
+            sql`coalesce(((metricsLinks as any).metadata ->> 'project_slug'), '') = ${projects.slug}`,
+            sql`coalesce(((metricsLinks as any).metadata ->> 'steam_app_id'), '') <> ''`
+          ) as any
         )
-        .groupBy(metricsMetricPoints.entityId)
+        .leftJoin(
+          metricsMetricPoints,
+          and(
+            eq(metricsMetricPoints.metricKey, 'gross_revenue_usd'),
+            sql`(${metricsMetricPoints.dimensions} ->> 'steam_app_id') = ((metricsLinks as any).metadata ->> 'steam_app_id')`,
+            sql`1=1 ${timeFilter}`
+          ) as any
+        )
+        .groupBy(projects.id)
         .as('rev_30d');
 
       metricJoin = rev;
