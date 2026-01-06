@@ -88,7 +88,7 @@ export function LinksEditor({ links, onAdd, onRemove, canManage = false }: Links
             { key: 'entityType', label: 'Entity Type' },
             { key: 'entityId', label: 'Entity ID' },
             { key: 'metadata', label: 'Metadata' },
-            ...(canManage ? [{ key: 'actions', label: '', hideable: false }] : []),
+            ...(canManage ? [{ key: 'actions', label: '' }] : []),
           ]}
           data={links.map((link) => ({
             entityType: link.entityType,
