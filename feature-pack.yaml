@@ -11,9 +11,6 @@ routes:
   - path: /projects
     page: Dashboard
     roles: []
-  - path: /projects/dashboard
-    page: DashboardMetrics
-    roles: []
   - path: /projects/new
     page: CreateProject
     roles: []
@@ -59,11 +56,11 @@ nav:
     children:
       - id: projects-dashboards
         label: Dashboard
-        path: /projects/dashboard
+        path: /dashboards?pack=projects
         icon: LayoutDashboard
         weight: 0
         showWhen: authenticated
-      - id: projects-list
+      - id: projects-dashboard
         label: Projects
         path: /projects
         icon: FolderKanban
