@@ -162,6 +162,10 @@ api:
       methods: [GET, POST]
       handler: "@hit/feature-pack-projects/server/api/projects-activity"
       description: "List project activity log (GET) or create activity (POST)"
+    - path: /api/projects/[projectId]/activity/[activityId]
+      methods: [GET, PUT, DELETE]
+      handler: "@hit/feature-pack-projects/server/api/projects-activity-id"
+      description: "Get, update, or delete a specific project activity"
     - path: /api/projects/activity/all
       methods: [GET]
       handler: "@hit/feature-pack-projects/server/api/projects-activity-all"

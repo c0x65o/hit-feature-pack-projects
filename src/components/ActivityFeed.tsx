@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useUi } from '@hit/ui-kit';
 import type { ProjectActivity } from '../schema/projects';
-import { Plus } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 
 interface ActivityFeedProps {
   activities: ProjectActivity[];
@@ -11,9 +11,12 @@ interface ActivityFeedProps {
   filter?: string;
   onFilterChange?: (filter: string) => void;
   onAddActivity?: () => void;
+  onEditActivity?: (activity: ProjectActivity & { activityTypeRecord?: any }) => void;
+  onDeleteActivity?: (activity: ProjectActivity & { activityTypeRecord?: any }) => void;
+  canEdit?: boolean;
 }
 
-export function ActivityFeed({ activities, loading, filter = '', onFilterChange, onAddActivity }: ActivityFeedProps) {
+export function ActivityFeed({ activities, loading, filter = '', onFilterChange, onAddActivity, onEditActivity, onDeleteActivity, canEdit = false }: ActivityFeedProps) {
   const { Card, Button } = useUi();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -155,11 +158,33 @@ export function ActivityFeed({ activities, loading, filter = '', onFilterChange,
                       </div>
                     )}
                   </div>
-                  {activity.metadata != null && (
-                    <Button variant="ghost" size="sm" onClick={() => toggleExpand(activity.id)}>
-                      {expanded.has(activity.id) ? 'Hide' : 'Details'}
-                    </Button>
-                  )}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {activity.metadata != null && (
+                      <Button variant="ghost" size="sm" onClick={() => toggleExpand(activity.id)}>
+                        {expanded.has(activity.id) ? 'Hide' : 'Details'}
+                      </Button>
+                    )}
+                    {canEdit && activity.typeId && onEditActivity && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditActivity(activity)}
+                        title="Edit activity"
+                      >
+                        <Edit size={16} />
+                      </Button>
+                    )}
+                    {canEdit && activity.typeId && onDeleteActivity && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteActivity(activity)}
+                        title="Delete activity"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

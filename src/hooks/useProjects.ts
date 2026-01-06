@@ -285,7 +285,34 @@ export function useProjectActivity(projectId: string | undefined, filter?: strin
     return await res.json();
   };
 
-  return { activity, loading, error, refresh: fetchData, createActivity };
+  const updateActivity = async (activityId: string, updates: { typeId?: string; title?: string; description?: string; link?: string; occurredAt?: string }) => {
+    if (!projectId) throw new Error('Project ID required');
+    const res = await fetch(`/api/projects/${projectId}/activity/${activityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json?.error || 'Failed to update activity');
+    }
+    await fetchData();
+    return await res.json();
+  };
+
+  const deleteActivity = async (activityId: string) => {
+    if (!projectId) throw new Error('Project ID required');
+    const res = await fetch(`/api/projects/${projectId}/activity/${activityId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json?.error || 'Failed to delete activity');
+    }
+    await fetchData();
+  };
+
+  return { activity, loading, error, refresh: fetchData, createActivity, updateActivity, deleteActivity };
 }
 
 export interface ProjectFormInfo {

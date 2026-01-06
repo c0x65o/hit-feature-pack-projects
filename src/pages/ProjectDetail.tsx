@@ -12,6 +12,7 @@ import {
   ProjectStatusBadge,
   ActivityFeed,
 } from '../components';
+import type { ProjectActivity } from '../schema/projects';
 import { Edit, Trash2 } from 'lucide-react';
 
 export function ProjectDetail(props: { id: string; onNavigate?: (path: string) => void }) {
@@ -21,14 +22,17 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
   const { project, loading: projectLoading, refresh: refreshProject } = useProject(projectId);
   const { activityTypes } = useProjectActivityTypes();
   const [activityFilter, setActivityFilter] = useState('');
-  const { activity, loading: activityLoading, createActivity } = useProjectActivity(projectId, activityFilter);
+  const { activity, loading: activityLoading, createActivity, updateActivity, deleteActivity } = useProjectActivity(projectId, activityFilter);
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<(ProjectActivity & { activityTypeRecord?: any }) | null>(null);
   const [formTypeId, setFormTypeId] = useState('');
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formLink, setFormLink] = useState('');
   const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 16));
   const [creatingActivity, setCreatingActivity] = useState(false);
+  const [updatingActivity, setUpdatingActivity] = useState(false);
+  const [deletingActivity, setDeletingActivity] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const handleEdit = () => {
@@ -83,6 +87,15 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
     }
   };
 
+  const resetForm = () => {
+    setFormTypeId('');
+    setFormTitle('');
+    setFormDescription('');
+    setFormLink('');
+    setFormOccurredAt(new Date().toISOString().slice(0, 16));
+    setEditingActivity(null);
+  };
+
   const handleAddActivity = async () => {
     if (!formTypeId || !formTitle.trim()) return;
     setCreatingActivity(true);
@@ -94,11 +107,7 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
         link: formLink.trim() || undefined,
         occurredAt: formOccurredAt || undefined,
       });
-      setFormTypeId('');
-      setFormTitle('');
-      setFormDescription('');
-      setFormLink('');
-      setFormOccurredAt(new Date().toISOString().slice(0, 16));
+      resetForm();
       setShowAddActivityModal(false);
     } catch (err) {
       console.error('Failed to create activity:', err);
@@ -111,6 +120,77 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
       );
     } finally {
       setCreatingActivity(false);
+    }
+  };
+
+  const handleEditActivity = (activity: ProjectActivity & { activityTypeRecord?: any }) => {
+    setEditingActivity(activity);
+    setFormTypeId(activity.typeId || '');
+    setFormTitle(activity.title || '');
+    setFormDescription(activity.description || '');
+    setFormLink(activity.link || '');
+    setFormOccurredAt(
+      activity.occurredAt
+        ? new Date(activity.occurredAt).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16)
+    );
+    setShowAddActivityModal(true);
+  };
+
+  const handleUpdateActivity = async () => {
+    if (!editingActivity || !formTypeId || !formTitle.trim()) return;
+    setUpdatingActivity(true);
+    try {
+      await updateActivity(editingActivity.id, {
+        typeId: formTypeId,
+        title: formTitle.trim(),
+        description: formDescription.trim() || undefined,
+        link: formLink.trim() || undefined,
+        occurredAt: formOccurredAt || undefined,
+      });
+      resetForm();
+      setShowAddActivityModal(false);
+    } catch (err) {
+      console.error('Failed to update activity:', err);
+      await alertDialog.showAlert(
+        err instanceof Error ? err.message : 'Failed to update activity',
+        {
+          variant: 'error',
+          title: 'Error',
+        }
+      );
+    } finally {
+      setUpdatingActivity(false);
+    }
+  };
+
+  const handleDeleteActivity = async (activity: ProjectActivity & { activityTypeRecord?: any }) => {
+    const confirmed = await alertDialog.showConfirm(
+      `Are you sure you want to delete this activity? This action cannot be undone.`,
+      {
+        variant: 'error',
+        title: 'Delete Activity',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+      }
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingActivity(true);
+      await deleteActivity(activity.id);
+    } catch (err) {
+      console.error('Failed to delete activity:', err);
+      await alertDialog.showAlert(
+        err instanceof Error ? err.message : 'Failed to delete activity',
+        {
+          variant: 'error',
+          title: 'Error',
+        }
+      );
+    } finally {
+      setDeletingActivity(false);
     }
   };
 
@@ -231,18 +311,27 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
               loading={activityLoading}
               filter={activityFilter}
               onFilterChange={setActivityFilter}
-              onAddActivity={canEdit ? () => setShowAddActivityModal(true) : undefined}
+              onAddActivity={canEdit ? () => {
+                resetForm();
+                setShowAddActivityModal(true);
+              } : undefined}
+              onEditActivity={canEdit ? handleEditActivity : undefined}
+              onDeleteActivity={canEdit ? handleDeleteActivity : undefined}
+              canEdit={canEdit}
             />
           </div>
         }
         onNavigate={navigate}
       />
 
-      {/* Add Activity Modal */}
+      {/* Add/Edit Activity Modal */}
       <Modal
         open={showAddActivityModal}
-        onClose={() => setShowAddActivityModal(false)}
-        title="Add Activity"
+        onClose={() => {
+          resetForm();
+          setShowAddActivityModal(false);
+        }}
+        title={editingActivity ? 'Edit Activity' : 'Add Activity'}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
@@ -317,17 +406,20 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
             <Button
               variant="secondary"
-              onClick={() => setShowAddActivityModal(false)}
-              disabled={creatingActivity}
+              onClick={() => {
+                resetForm();
+                setShowAddActivityModal(false);
+              }}
+              disabled={creatingActivity || updatingActivity}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
-              onClick={handleAddActivity}
-              disabled={creatingActivity || !formTypeId || !formTitle.trim()}
+              onClick={editingActivity ? handleUpdateActivity : handleAddActivity}
+              disabled={(creatingActivity || updatingActivity) || !formTypeId || !formTitle.trim()}
             >
-              {creatingActivity ? 'Adding...' : 'Add Activity'}
+              {creatingActivity ? 'Adding...' : updatingActivity ? 'Updating...' : editingActivity ? 'Update Activity' : 'Add Activity'}
             </Button>
           </div>
         </div>
