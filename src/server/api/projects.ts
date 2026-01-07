@@ -213,6 +213,28 @@ export async function GET(request: NextRequest) {
             if (operator === 'dateEquals') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date = ${v}`);
             else if (operator === 'dateBefore') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date < ${v}`);
             else if (operator === 'dateAfter') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date > ${v}`);
+            else if (operator === 'dateBetween') {
+              // Expect JSON string {"from":"yyyy-mm-dd","to":"yyyy-mm-dd"} (also accept "a..b" or "a,b")
+              let fromRaw: string | null = null;
+              let toRaw: string | null = null;
+              try {
+                const parsed = JSON.parse(v);
+                if (parsed && typeof parsed === 'object') {
+                  fromRaw = (parsed as any).from ?? (parsed as any).start ?? null;
+                  toRaw = (parsed as any).to ?? (parsed as any).end ?? null;
+                }
+              } catch {
+                const sep = v.includes('..') ? '..' : (v.includes(',') ? ',' : null);
+                if (sep) {
+                  const [a, b] = v.split(sep).map((x) => x.trim());
+                  fromRaw = a || null;
+                  toRaw = b || null;
+                }
+              }
+
+              if (fromRaw) viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date >= ${String(fromRaw)}`);
+              if (toRaw) viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp}::date <= ${String(toRaw)}`);
+            }
             else if (operator === 'isNull') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp} is null`);
             else if (operator === 'isNotNull') viewFilterConditions.push(sql`${projects.lastUpdatedOnTimestamp} is not null`);
           }
