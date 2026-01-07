@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useUi } from '@hit/ui-kit';
+import { useServerDataTableState } from '@hit/ui-kit';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 import { ProjectStatusesProvider } from '../hooks/ProjectStatusesContext';
@@ -10,27 +11,33 @@ import { Plus } from 'lucide-react';
 
 function DashboardContent() {
   const { Page, Card, Button, DataTable } = useUi();
-  const [page, setPage] = useState(1);
-  const pageSize = 25;
   
   // Load available statuses for the status filter dropdown (uses shared context)
   const { activeStatuses } = useProjectStatuses();
   
-  // View state from table views (filters + AND/OR mode + default sorting)
-  const [viewFilters, setViewFilters] = useState<Array<{ field: string; operator: string; value: any }>>([]);
-  const [viewFilterMode, setViewFilterMode] = useState<'all' | 'any'>('all');
-  const [sortConfig, setSortConfig] = useState<{ sortBy: string; sortOrder: 'asc' | 'desc' }>({
-    sortBy: 'lastUpdatedOnTimestamp',
-    sortOrder: 'desc',
+  const serverTable = useServerDataTableState({
+    tableId: 'projects',
+    pageSize: 25,
+    initialSort: { sortBy: 'lastUpdatedOnTimestamp', sortOrder: 'desc' },
+    sortWhitelist: [
+      'name',
+      'statusId',
+      'createdOnTimestamp',
+      'lastUpdatedOnTimestamp',
+      // Metric-backed sorting (dynamic columns)
+      'revenue_30d_usd',
+      'revenue_all_time_usd',
+    ],
   });
 
   const { data, loading, error, refresh } = useProjects({
-    page,
-    pageSize,
-    sortBy: sortConfig.sortBy,
-    sortOrder: sortConfig.sortOrder,
-    filters: viewFilters,
-    filterMode: viewFilterMode,
+    page: serverTable.query.page,
+    pageSize: serverTable.query.pageSize,
+    search: serverTable.query.search,
+    sortBy: serverTable.query.sortBy,
+    sortOrder: serverTable.query.sortOrder,
+    filters: serverTable.query.filters as any,
+    filterMode: serverTable.query.filterMode,
   });
   
   // Build status options from loaded statuses
@@ -123,29 +130,15 @@ function DashboardContent() {
             loading={loading}
             onRowClick={handleRowClick}
             emptyMessage="No projects yet. Create your first project to track activities, linked systems, and more."
-            pageSize={pageSize}
             total={pagination?.total}
-            page={page}
-            onPageChange={setPage}
-            manualPagination={true}
+            {...serverTable.dataTable}
             onRefresh={refresh}
             refreshing={loading}
             initialSorting={[{ id: 'lastUpdatedOnTimestamp', desc: true }]}
             tableId="projects"
             enableViews={true}
-            onViewFiltersChange={setViewFilters}
-            onViewFilterModeChange={(mode: string) => {
-              if (mode === 'all' || mode === 'any') {
-                setViewFilterMode(mode);
-              }
-            }}
-            onViewSortingChange={(sorting: Array<{ id: string; desc?: boolean }>) => {
-              const first = Array.isArray(sorting) ? sorting[0] : null;
-              const id = first?.id;
-              if (id === 'name' || id === 'lastUpdatedOnTimestamp' || id === 'revenue_30d_usd' || id === 'revenue_all_time_usd') {
-                setSortConfig({ sortBy: id, sortOrder: first?.desc ? 'desc' : 'asc' });
-              }
-            }}
+            showGlobalFilters
+            searchDebounceMs={400}
           />
         )}
       </Card>
