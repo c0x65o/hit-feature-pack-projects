@@ -20,7 +20,7 @@ export function ProjectDetail(props) {
     const [formTitle, setFormTitle] = useState('');
     const [formDescription, setFormDescription] = useState('');
     const [formLink, setFormLink] = useState('');
-    const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 16));
+    const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 10));
     const [creatingActivity, setCreatingActivity] = useState(false);
     const [updatingActivity, setUpdatingActivity] = useState(false);
     const [deletingActivity, setDeletingActivity] = useState(false);
@@ -74,7 +74,7 @@ export function ProjectDetail(props) {
         setFormTitle('');
         setFormDescription('');
         setFormLink('');
-        setFormOccurredAt(new Date().toISOString().slice(0, 16));
+        setFormOccurredAt(new Date().toISOString().slice(0, 10));
         setEditingActivity(null);
     };
     const handleAddActivity = async () => {
@@ -110,8 +110,8 @@ export function ProjectDetail(props) {
         setFormDescription(activity.description || '');
         setFormLink(activity.link || '');
         setFormOccurredAt(activity.occurredAt
-            ? new Date(activity.occurredAt).toISOString().slice(0, 16)
-            : new Date().toISOString().slice(0, 16));
+            ? new Date(activity.occurredAt).toISOString().slice(0, 10)
+            : new Date().toISOString().slice(0, 10));
         setShowAddActivityModal(true);
     };
     const handleUpdateActivity = async () => {
@@ -197,7 +197,7 @@ export function ProjectDetail(props) {
                                                 border: '1px solid var(--hit-border, #e2e8f0)',
                                                 borderRadius: '6px',
                                                 fontSize: '14px',
-                                            }, children: [_jsx("option", { value: "", children: "Select type..." }), activityTypes.map((type) => (_jsx("option", { value: type.id, children: type.name }, type.id)))] })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Title *" }), _jsx(Input, { value: formTitle, onChange: setFormTitle, placeholder: "e.g., Winter Sale 2024" })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "When did this occur? *" }), _jsx(Input, { type: "datetime-local", value: formOccurredAt, onChange: setFormOccurredAt })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Description" }), _jsx(TextArea, { value: formDescription, onChange: setFormDescription, placeholder: "What happened?", rows: 4 })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Link (optional)" }), _jsx(Input, { value: formLink, onChange: setFormLink, placeholder: "https://..." })] }), _jsxs("div", { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { variant: "secondary", onClick: () => {
+                                            }, children: [_jsx("option", { value: "", children: "Select type..." }), activityTypes.map((type) => (_jsx("option", { value: type.id, children: type.name }, type.id)))] })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Title *" }), _jsx(Input, { value: formTitle, onChange: setFormTitle, placeholder: "e.g., Winter Sale 2024" })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "When did this occur? *" }), _jsx(Input, { type: "date", value: formOccurredAt, onChange: setFormOccurredAt })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Description" }), _jsx(TextArea, { value: formDescription, onChange: setFormDescription, placeholder: "What happened?", rows: 4 })] }), _jsxs("div", { children: [_jsx("label", { style: { display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }, children: "Link (optional)" }), _jsx(Input, { value: formLink, onChange: setFormLink, placeholder: "https://..." })] }), _jsxs("div", { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }, children: [_jsx(Button, { variant: "secondary", onClick: () => {
                                                 resetForm();
                                                 setShowAddActivityModal(false);
                                             }, disabled: creatingActivity || updatingActivity, children: "Cancel" }), _jsx(Button, { variant: "primary", onClick: editingActivity ? handleUpdateActivity : handleAddActivity, disabled: (creatingActivity || updatingActivity) || !formTypeId || !formTitle.trim(), children: creatingActivity ? 'Adding...' : updatingActivity ? 'Updating...' : editingActivity ? 'Update Activity' : 'Add Activity' })] })] }) })] })] }));

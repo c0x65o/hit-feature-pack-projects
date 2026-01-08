@@ -29,7 +29,7 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formLink, setFormLink] = useState('');
-  const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 16));
+  const [formOccurredAt, setFormOccurredAt] = useState(new Date().toISOString().slice(0, 10));
   const [creatingActivity, setCreatingActivity] = useState(false);
   const [updatingActivity, setUpdatingActivity] = useState(false);
   const [deletingActivity, setDeletingActivity] = useState(false);
@@ -92,7 +92,7 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
     setFormTitle('');
     setFormDescription('');
     setFormLink('');
-    setFormOccurredAt(new Date().toISOString().slice(0, 16));
+    setFormOccurredAt(new Date().toISOString().slice(0, 10));
     setEditingActivity(null);
   };
 
@@ -131,8 +131,8 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
     setFormLink(activity.link || '');
     setFormOccurredAt(
       activity.occurredAt
-        ? new Date(activity.occurredAt).toISOString().slice(0, 16)
-        : new Date().toISOString().slice(0, 16)
+        ? new Date(activity.occurredAt).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10)
     );
     setShowAddActivityModal(true);
   };
@@ -374,7 +374,7 @@ export function ProjectDetail(props: { id: string; onNavigate?: (path: string) =
               When did this occur? *
             </label>
             <Input
-              type="datetime-local"
+              type="date"
               value={formOccurredAt}
               onChange={setFormOccurredAt}
             />

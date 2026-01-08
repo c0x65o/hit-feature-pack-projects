@@ -22,6 +22,7 @@ import {
   varchar,
   text,
   timestamp,
+  date,
   uuid,
   jsonb,
   index,
@@ -165,7 +166,7 @@ export const projectActivity = pgTable(
     userId: varchar('user_id', { length: 255 }).notNull(), // User who performed the action
     description: text('description'), // Human-readable description
     link: varchar('link', { length: 500 }), // Optional link URL
-    occurredAt: timestamp('occurred_at').defaultNow().notNull(), // When the activity occurred
+    occurredAt: date('occurred_at', { mode: 'date' }).defaultNow().notNull(), // When the activity occurred (date only)
     metadata: jsonb('metadata'), // Additional context (before/after values, etc.)
     createdAt: timestamp('created_at').defaultNow().notNull(), // When the activity record was created
   },

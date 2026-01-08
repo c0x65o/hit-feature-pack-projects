@@ -899,7 +899,7 @@ export declare const projectActivity: import("drizzle-orm/pg-core").PgTableWithC
             name: "occurred_at";
             tableName: "project_activity";
             dataType: "date";
-            columnType: "PgTimestamp";
+            columnType: "PgDate";
             data: Date;
             driverParam: string;
             notNull: true;
