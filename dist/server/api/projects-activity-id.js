@@ -8,6 +8,14 @@ import { requireProjectPermission } from '../lib/access';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 /**
+ * Parse a date string (YYYY-MM-DD) as a local date.
+ * Avoids UTC midnight timezone issues where "2026-01-06" becomes Jan 5 in US timezones.
+ */
+function parseLocalDate(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+/**
  * Extract IDs from URL path
  * Format: /api/projects/{projectId}/activity/{activityId}
  */
@@ -145,7 +153,8 @@ export async function PUT(request) {
             updates.link = body.link || null;
         }
         if (body.occurredAt !== undefined) {
-            const d = new Date(body.occurredAt);
+            // Parse date string as local date (avoid UTC midnight timezone issues)
+            const d = parseLocalDate(body.occurredAt);
             if (!Number.isFinite(d.getTime())) {
                 return NextResponse.json({ error: 'Invalid occurredAt date' }, { status: 400 });
             }
