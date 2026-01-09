@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUi, useFormSubmit } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useFormSubmit } from '@hit/ui-kit/hooks/useFormSubmit';
 import { useProjectActivityTypes } from '../hooks/useProjectActivityTypes';
 
 const CATEGORIES = [

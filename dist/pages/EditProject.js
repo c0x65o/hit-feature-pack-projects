@@ -1,7 +1,8 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { useUi, useFormSubmit } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useFormSubmit } from '@hit/ui-kit/hooks/useFormSubmit';
 import { useProject, useProjects } from '../hooks/useProjects';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 export function EditProject(props) {

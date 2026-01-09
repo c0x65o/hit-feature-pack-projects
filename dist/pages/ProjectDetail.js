@@ -1,7 +1,8 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
 import { useProject, useProjectActivity, useProjectActivityTypes, } from '../hooks/useProjects';
 import { LinkedEntityTabs } from '@hit/feature-pack-form-core';
 import { ProjectStatusBadge, ActivityFeed, } from '../components';

@@ -1,7 +1,8 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
 import { useProjectActivityTypes } from '../hooks/useProjectActivityTypes';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 export function Timeline() {

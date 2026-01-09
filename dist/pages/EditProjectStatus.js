@@ -1,7 +1,9 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { useUi, useAlertDialog, useFormSubmit } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
+import { useFormSubmit } from '@hit/ui-kit/hooks/useFormSubmit';
 import { useProjectStatus } from '../hooks/useProjectStatuses';
 import { Trash2 } from 'lucide-react';
 export function EditProjectStatus(props) {

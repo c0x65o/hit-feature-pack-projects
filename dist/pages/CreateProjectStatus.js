@@ -1,7 +1,8 @@
 'use client';
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState } from 'react';
-import { useUi, useFormSubmit } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useFormSubmit } from '@hit/ui-kit/hooks/useFormSubmit';
 import { useProjectStatuses } from '../hooks/useProjectStatuses';
 export function CreateProjectStatus() {
     const { Page, Card, Button, Input, Select, ColorPicker, Alert } = useUi();

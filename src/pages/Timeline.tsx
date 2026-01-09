@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
 import { useProjectActivityTypes } from '../hooks/useProjectActivityTypes';
 import type { ProjectActivity, Project } from '../schema/projects';
 import { Plus, Edit, Trash2 } from 'lucide-react';

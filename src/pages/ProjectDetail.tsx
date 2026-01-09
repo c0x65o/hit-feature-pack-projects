@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useUi, useAlertDialog } from '@hit/ui-kit';
+import { useUi } from '@hit/ui-kit';
+import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
 import {
   useProject,
   useProjectActivity,
