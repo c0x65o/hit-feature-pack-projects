@@ -9,10 +9,8 @@ import {
   useProjectActivityTypes,
 } from '../hooks/useProjects';
 import { LinkedEntityTabs } from '@hit/feature-pack-form-core';
-import {
-  ProjectStatusBadge,
-  ActivityFeed,
-} from '../components';
+import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
+import { ActivityFeed } from '../components/ActivityFeed';
 import type { ProjectActivity } from '../schema/projects';
 import { Edit, Trash2 } from 'lucide-react';
 

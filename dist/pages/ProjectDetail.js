@@ -5,7 +5,8 @@ import { useUi } from '@hit/ui-kit';
 import { useAlertDialog } from '@hit/ui-kit/hooks/useAlertDialog';
 import { useProject, useProjectActivity, useProjectActivityTypes, } from '../hooks/useProjects';
 import { LinkedEntityTabs } from '@hit/feature-pack-form-core';
-import { ProjectStatusBadge, ActivityFeed, } from '../components';
+import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { Edit, Trash2 } from 'lucide-react';
 export function ProjectDetail(props) {
     const { Page, Card, Button, Input, AlertDialog, Modal, TextArea } = useUi();
