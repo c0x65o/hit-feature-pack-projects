@@ -7,7 +7,7 @@ import {
   useProjectActivity,
   useProjectActivityTypes,
 } from '../hooks/useProjects';
-import { LinkedEntityTabs } from '@hit/feature-pack-forms';
+import { LinkedEntityTabs } from '@hit/feature-pack-form-core';
 import {
   ProjectStatusBadge,
   ActivityFeed,
